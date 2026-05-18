@@ -2,9 +2,10 @@ const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 
-const { loginManual } = require("../controllers/auth.controller");
+const { loginManual, register } = require("../controllers/auth.controller");
 
 router.post("/login", loginManual);
+router.post("/register", register);
 
 router.get(
   "/google",
