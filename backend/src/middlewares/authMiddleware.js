@@ -41,7 +41,12 @@ const permitirRoles = (...rolesPermitidos) => {
   return (req, res, next) => {
     const rolUsuario = req.usuario?.rol?.nombre_rol;
 
-    if (!rolesPermitidos.includes(rolUsuario)) {
+    const rolesExtendidos = [...rolesPermitidos];
+    if (rolesPermitidos.includes("MEDICO")) {
+      rolesExtendidos.push("MEDICO_RESIDENTE", "SECRETARIA");
+    }
+
+    if (!rolesExtendidos.includes(rolUsuario)) {
       return res.status(403).json({
         ok: false,
         message: "No tienes permisos para acceder a esta ruta",

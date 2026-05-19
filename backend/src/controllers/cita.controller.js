@@ -20,10 +20,29 @@ const crearCita = async (req, res) => {
 
 const listarCitas = async (req, res) => {
   try {
+    let whereClause = {};
+    if (req.usuario?.rol?.nombre_rol === "PACIENTE") {
+      const paciente = await Paciente.findOne({ where: { id_usuario: req.usuario.id_usuario } });
+      if (paciente) {
+        whereClause.id_paciente = paciente.id_paciente;
+      } else {
+        return res.json({ ok: true, citas: [] });
+      }
+    }
+
     const citas = await Cita.findAll({
+      where: whereClause,
       include: [
-        { model: Paciente, as: "paciente" },
-        { model: Medico, as: "medico" },
+        { 
+          model: Paciente, 
+          as: "paciente",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
+        { 
+          model: Medico, 
+          as: "medico",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
         { model: TipoConsulta, as: "tipoConsulta" },
         { model: Usuario, as: "usuarioCreador" },
       ],
@@ -44,8 +63,16 @@ const obtenerCita = async (req, res) => {
   try {
     const cita = await Cita.findByPk(req.params.id, {
       include: [
-        { model: Paciente, as: "paciente" },
-        { model: Medico, as: "medico" },
+        { 
+          model: Paciente, 
+          as: "paciente",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
+        { 
+          model: Medico, 
+          as: "medico",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
         { model: TipoConsulta, as: "tipoConsulta" },
         { model: Usuario, as: "usuarioCreador" },
       ],
@@ -56,6 +83,16 @@ const obtenerCita = async (req, res) => {
         ok: false,
         message: "Cita médica no encontrada",
       });
+    }
+
+    if (req.usuario?.rol?.nombre_rol === "PACIENTE") {
+      const paciente = await Paciente.findOne({ where: { id_usuario: req.usuario.id_usuario } });
+      if (!paciente || cita.id_paciente !== paciente.id_paciente) {
+        return res.status(403).json({
+          ok: false,
+          message: "No tienes permisos para ver esta cita"
+        });
+      }
     }
 
     res.json({ ok: true, cita });
@@ -81,10 +118,27 @@ const actualizarCita = async (req, res) => {
 
     await cita.update(req.body);
 
+    const citaActualizada = await Cita.findByPk(req.params.id, {
+      include: [
+        { 
+          model: Paciente, 
+          as: "paciente",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
+        { 
+          model: Medico, 
+          as: "medico",
+          include: [{ model: Usuario, as: "usuario" }]
+        },
+        { model: TipoConsulta, as: "tipoConsulta" },
+        { model: Usuario, as: "usuarioCreador" },
+      ],
+    });
+
     res.json({
       ok: true,
       message: "Cita médica actualizada correctamente",
-      cita,
+      cita: citaActualizada,
     });
   } catch (error) {
     res.status(500).json({

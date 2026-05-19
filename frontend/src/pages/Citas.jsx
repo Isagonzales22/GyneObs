@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, User, Plus, Search, CheckCircle, XCircle, Clock3, Trash2 } from 'lucide-react';
 import './Patients.css'; // Reusing some base styles
 
-import { citaService } from '../services/api';
+import { citaService, pacienteService, medicoService } from '../services/api';
 
 const Citas = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,10 +27,10 @@ const Citas = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [citasRes, pacRes, userRes] = await Promise.all([
+        const [citasRes, pacRes, medRes] = await Promise.all([
           citaService.getAll(),
-          import('../services/api').then(m => m.pacienteService.getAll()),
-          import('../services/api').then(m => m.usuarioService.getAll())
+          pacienteService.getAll(),
+          medicoService.getAll()
         ]);
         
         const citasData = citasRes.data?.citas || citasRes.data || [];
@@ -39,8 +39,8 @@ const Citas = () => {
         const pacData = pacRes.data?.pacientes || pacRes.data || [];
         setPacientes(Array.isArray(pacData) ? pacData : []);
 
-        const usersData = userRes.data?.usuarios || userRes.data || [];
-        setMedicos(usersData.filter(u => u.id_rol === 2 || (u.rol && u.rol.nombre_rol === 'MEDICO')));
+        const medicosData = medRes.data?.medicos || medRes.data || [];
+        setMedicos(Array.isArray(medicosData) ? medicosData : []);
       } catch (error) {
         console.error("Error fetching data for citas", error);
       } finally {
@@ -179,8 +179,8 @@ const Citas = () => {
               <select value={formData.id_medico} onChange={e=>setFormData({...formData, id_medico: e.target.value})} required style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)' }}>
                 <option value="">-- Seleccionar Médico --</option>
                 {medicos.map(m => (
-                  <option key={m.id_usuario || m.id} value={m.id_usuario || m.id}>
-                    Dr/a. {m.primer_nombre || m.nombre} {m.primer_apellido || m.apellido}
+                  <option key={m.id_medico} value={m.id_medico}>
+                    Dr/a. {m.usuario?.primer_nombre || m.nombre} {m.usuario?.primer_apellido || m.apellido} - {m.especialidad || 'Médico'}
                   </option>
                 ))}
               </select>
@@ -258,7 +258,7 @@ const Citas = () => {
                     <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleEdit(cita)}>
                       Editar
                     </button>
-                    <button className="btn btn-danger" style={{ padding: '6px' }} onClick={() => setDeleteModal({ show: true, id: cita.id_cita || cita.id, name: `la cita de ${cita.paciente?.primer_nombre || 'Paciente'}` })}>
+                    <button className="btn btn-danger" style={{ padding: '6px' }} onClick={() => setDeleteModal({ show: true, id: cita.id_cita || cita.id, name: `la cita de ${cita.paciente?.usuario?.primer_nombre || cita.paciente?.primer_nombre || 'Paciente'}` })}>
                       <Trash2 size={16} />
                     </button>
                   </td>

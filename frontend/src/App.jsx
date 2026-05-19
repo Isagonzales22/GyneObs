@@ -11,6 +11,7 @@ import Citas from './pages/Citas';
 import Cirugias from './pages/Cirugias';
 import Insumos from './pages/Insumos';
 import Educacion from './pages/Educacion';
+import Profile from './pages/Profile';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -29,6 +30,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       
+      
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="usuarios" element={<UsersRoles />} />
@@ -39,6 +41,7 @@ function AppRoutes() {
         <Route path="cirugias" element={<Cirugias />} />
         <Route path="insumos" element={<Insumos />} />
         <Route path="educacion" element={<Educacion />} />
+        <Route path="perfil" element={<Profile />} />
       </Route>
     </Routes>
   );

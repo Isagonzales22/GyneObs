@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, User, Phone, Calendar, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, Plus, User, Phone, Calendar, ChevronRight, Trash2, Edit } from 'lucide-react';
 import { pacienteService } from '../services/api';
 import './Patients.css';
 
@@ -45,9 +45,9 @@ const PatientsList = () => {
   };
 
   const filteredPatients = patients.filter(p => {
-    const nombre = p.primer_nombre || p.nombre || '';
-    const apellido = p.primer_apellido || p.apellido || '';
-    const dni = p.ci || p.dni || '';
+    const nombre = p.usuario?.primer_nombre || p.primer_nombre || p.nombre || '';
+    const apellido = p.usuario?.primer_apellido || p.primer_apellido || p.apellido || '';
+    const dni = p.usuario?.ci || p.ci || p.dni || '';
     
     return nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
            apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,23 +86,26 @@ const PatientsList = () => {
           <div className="patients-grid">
             {filteredPatients.map(patient => (
               <div 
-                key={patient.id} 
+                key={patient.id_paciente || patient.id} 
                 className="patient-card"
-                onClick={() => navigate(`/pacientes/${patient.id}`)}
+                onClick={() => navigate(`/pacientes/${patient.id_paciente || patient.id}`)}
               >
                 <div className="patient-avatar">
                   <User size={24} />
                 </div>
                 <div className="patient-info">
-                  <h3>{patient.primer_nombre || patient.nombre} {patient.primer_apellido || patient.apellido}</h3>
+                  <h3>{patient.usuario?.primer_nombre || patient.primer_nombre || patient.nombre} {patient.usuario?.primer_apellido || patient.primer_apellido || patient.apellido}</h3>
                   <div className="patient-details">
-                    <span>CI: {patient.ci || patient.dni || 'N/A'}</span>
-                    <span><Phone size={12} /> {patient.telefono || 'Sin registrar'}</span>
-                    <span><Calendar size={12} /> {patient.fecha_nacimiento || patient.fechaNacimiento ? new Date(patient.fecha_nacimiento || patient.fechaNacimiento).toLocaleDateString() : 'N/A'}</span>
+                    <span>CI: {patient.usuario?.ci || patient.ci || patient.dni || 'N/A'}</span>
+                    <span><Phone size={12} /> {patient.usuario?.telefono || patient.telefono || 'Sin registrar'}</span>
+                    <span><Calendar size={12} /> {patient.usuario?.fecha_nacimiento || patient.fecha_nacimiento || patient.fechaNacimiento ? new Date(patient.usuario?.fecha_nacimiento || patient.fecha_nacimiento || patient.fechaNacimiento).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
                 <div className="action-icon" style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-danger" style={{ padding: '6px' }} onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, id: patient.id_paciente || patient.id, name: `${patient.primer_nombre || patient.nombre} ${patient.primer_apellido || patient.apellido}` }); }}>
+                  <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); navigate(`/pacientes/${patient.id_paciente || patient.id}?edit=true`); }} title="Editar Paciente">
+                    <Edit size={18} />
+                  </button>
+                  <button className="btn btn-danger" style={{ padding: '6px', display: 'flex', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, id: patient.id_paciente || patient.id, name: `${patient.usuario?.primer_nombre || patient.primer_nombre || patient.nombre} ${patient.usuario?.primer_apellido || patient.primer_apellido || patient.apellido}` }); }} title="Eliminar Paciente">
                     <Trash2 size={18} />
                   </button>
                   <ChevronRight size={20} />

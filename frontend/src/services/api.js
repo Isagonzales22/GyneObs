@@ -89,11 +89,32 @@ export const cirugiaService = {
 
 export const insumoService = {
   getAll: () => api.get('/insumos'),
+  getById: (id) => api.get(`/insumos/${id}`),
   create: (data) => api.post('/insumos', data),
   update: (id, data) => api.put(`/insumos/${id}`, data),
+  delete: (id) => api.delete(`/insumos/${id}`),
+};
+
+export const uploadService = {
+  uploadProfilePhoto: (file) => {
+    const formData = new FormData();
+    formData.append('foto', file);
+    return api.post('/upload/perfil', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 export const contenidoEducativoService = {
   getAll: () => api.get('/contenidos-educativos'),
   create: (data) => api.post('/contenidos-educativos', data),
+};
+
+// Agrega este servicio en tu api.js
+export const medicoService = {
+  getAll: () => api.get('/medicos'),
+  getById: (id) => api.get(`/medicos/${id}`),
+  create: (data) => api.post('/medicos', data),
+  update: (id, data) => api.put(`/medicos/${id}`, data),
+  delete: (id) => api.delete(`/medicos/${id}`),
 };

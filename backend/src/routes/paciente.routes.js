@@ -17,35 +17,35 @@ const {
 router.get(
   "/",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   listarPacientes
 );
 
 router.post(
   "/",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   crearPaciente
 );
 
 router.get(
   "/:id",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   obtenerPacientePorId
 );
 
 router.put(
   "/:id",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   actualizarPaciente
 );
 
 router.delete(
   "/:id",
   verificarToken,
-  permitirRoles("ADMINISTRADOR"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   eliminarPaciente
 );
 

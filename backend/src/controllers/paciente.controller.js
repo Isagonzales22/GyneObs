@@ -19,6 +19,12 @@ const listarPacientes = async (req, res) => {
 
 const crearPaciente = async (req, res) => {
   try {
+    // Autogenerar codigo_paciente si no se proporciona
+    if (!req.body.codigo_paciente) {
+      const count = await Paciente.count();
+      const codeNum = String(count + 1).padStart(4, '0');
+      req.body.codigo_paciente = `PAC-${codeNum}`;
+    }
     const paciente = await Paciente.create(req.body);
 
     res.status(201).json({

@@ -69,6 +69,36 @@ const actualizarInsumo = async (req, res) => {
       });
     }
 
+    const userRole = req.usuario?.rol?.nombre_rol;
+
+    if (userRole === "MEDICO" || userRole === "MEDICO_RESIDENTE" || userRole === "SECRETARIA") {
+      const allowedFields = ["stock_actual"];
+      const invalidFields = Object.keys(req.body).filter(
+        (field) => !allowedFields.includes(field)
+      );
+
+      if (invalidFields.length > 0) {
+        return res.status(403).json({
+          ok: false,
+          message: "Solo puedes actualizar el stock al retirar insumo.",
+        });
+      }
+
+      if (typeof req.body.stock_actual === "undefined") {
+        return res.status(400).json({
+          ok: false,
+          message: "La actualización de stock es obligatoria para médicos.",
+        });
+      }
+    }
+
+    if (typeof req.body.stock_actual !== "undefined" && req.body.stock_actual < 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "El stock no puede ser negativo.",
+      });
+    }
+
     await insumo.update(req.body);
 
     res.json({

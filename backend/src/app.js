@@ -21,6 +21,7 @@ const cirugiaRoutes = require("./routes/cirugia.routes");
 const insumoMedicoRoutes = require("./routes/insumoMedico.routes");
 const movimientoInventarioRoutes = require("./routes/movimientoInventario.routes");
 const contenidoEducativoRoutes = require("./routes/contenidoEducativo.routes");
+const medicoRoutes = require("./routes/medico.routes");
 const passport = require("./config/passport");
 
 const app = express();
@@ -50,8 +51,13 @@ app.use("/api/cirugias", cirugiaRoutes);
 app.use("/api/insumos", insumoMedicoRoutes);
 app.use("/api/movimientos-inventario", movimientoInventarioRoutes);
 app.use("/api/contenidos-educativos", contenidoEducativoRoutes);
+app.use("/api/medicos", medicoRoutes);
+app.use('/api/uploads', express.static('uploads'));
+app.use('/api/upload', require('./routes/upload.routes')); 
 
 
+app.use(express.json({ limit: '10mb' }));      // Aumentar límite a 10MB
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.get("/", (req, res) => {
   res.json({

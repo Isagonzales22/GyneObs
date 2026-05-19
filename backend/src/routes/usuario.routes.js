@@ -14,13 +14,13 @@ const {
   permitirRoles,
 } = require("../middlewares/authMiddleware");
 
-router.get("/", verificarToken, permitirRoles("ADMINISTRADOR"), listarUsuarios);
+router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), listarUsuarios);
 
 router.post("/", verificarToken, permitirRoles("ADMINISTRADOR"), crearUsuario);
 
-router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), obtenerUsuarioPorId);
+router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerUsuarioPorId);
 
-router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), actualizarUsuario);
+router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), actualizarUsuario);
 
 router.delete("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), eliminarUsuario);
 

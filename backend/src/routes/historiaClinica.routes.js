@@ -17,7 +17,7 @@ const {
 router.get(
   "/",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   listarHistoriasClinicas
 );
 
@@ -31,7 +31,7 @@ router.post(
 router.get(
   "/:id",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"),
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
   obtenerHistoriaPorId
 );
 

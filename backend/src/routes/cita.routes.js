@@ -15,15 +15,15 @@ const {
   permitirRoles,
 } = require("../middlewares/authMiddleware");
 
-router.post("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), crearCita);
+router.post("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), crearCita);
 
-router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), listarCitas);
+router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "PACIENTE"), listarCitas);
 
-router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), obtenerCita);
+router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "PACIENTE"), obtenerCita);
 
-router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), actualizarCita);
+router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), actualizarCita);
 
-router.patch("/:id/cancelar", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), cancelarCita);
+router.patch("/:id/cancelar", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), cancelarCita);
 
 router.delete("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), eliminarCita);
 

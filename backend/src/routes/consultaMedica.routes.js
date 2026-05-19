@@ -16,9 +16,9 @@ const {
 
 router.post("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), crearConsultaMedica);
 
-router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), listarConsultasMedicas);
+router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), listarConsultasMedicas);
 
-router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"), obtenerConsultaMedica);
+router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerConsultaMedica);
 
 router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), actualizarConsultaMedica);
 

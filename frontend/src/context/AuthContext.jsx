@@ -58,8 +58,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // ✅ NUEVA FUNCIÓN: Actualizar usuario en el contexto
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
