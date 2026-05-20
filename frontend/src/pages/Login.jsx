@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, HeartPulse, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Home as HomeIcon } from 'lucide-react';
+import logo from '../images/logotipo/LOGOTIPO.png';
 import './Login.css';
 
 const Login = () => {
@@ -13,6 +14,12 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const getRoleRedirect = (roleName) => {
+    if (roleName === 'ADMINISTRADOR') return '/app/usuarios';
+    if (roleName === 'MEDICO') return '/app/citas';
+    return '/app';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -21,9 +28,10 @@ const Login = () => {
     const result = await login(email, password);
 
     if (result.success) {
-      navigate('/');
+      const roleName = result.usuario?.rol?.nombre_rol || result.usuario?.rol || '';
+      navigate(getRoleRedirect(roleName));
     } else {
-      setError(result.error);
+      setError(result.error || 'Credenciales incorrectas, revise email y contraseña.');
     }
 
     setIsLoading(false);
@@ -31,10 +39,20 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      <nav className="auth-nav">
+        <div className="auth-brand">
+          <img src={logo} alt="GyneObs" />
+        </div>
+        <div className="auth-links">
+          <Link to="/" className="home-link"><HomeIcon size={16} /> Inicio</Link>
+          <Link to="/register">Crear Cuenta</Link>
+        </div>
+      </nav>
+
       <div className="login-card glass-panel animate-fade-in">
         <div className="login-header">
           <div className="login-logo">
-            <HeartPulse size={40} color="white" />
+            <img src={logo} alt="GyneObs" className="login-logo-img" />
           </div>
           <h2>GyneObs</h2>
           <p>Sistema de Gestión Ginecológica y Obstétrica</p>

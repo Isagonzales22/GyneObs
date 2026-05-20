@@ -10,6 +10,7 @@ import './Layout.css';
 const Layout = () => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const basePath = '/app';
 
   const allNavItems = [
     { path: '/', label: 'Dashboard', icon: <Home size={20} />, roles: [1, 2, 3] },
@@ -57,7 +58,7 @@ const Layout = () => {
           {navItems.map((item) => (
             <NavLink 
               key={item.path} 
-              to={item.path} 
+              to={`${basePath}${item.path}`} 
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               title={item.label}
             >
@@ -88,7 +89,7 @@ const Layout = () => {
             <h3>Bienvenido, {user?.primer_nombre || user?.nombre || 'Usuario'}</h3>
           </div>
           <div className="user-profile">
-            <NavLink to="/perfil" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <NavLink to={`${basePath}/perfil`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="avatar" style={{
                 width: '40px',
                 height: '40px',

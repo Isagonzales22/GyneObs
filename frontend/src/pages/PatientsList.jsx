@@ -62,7 +62,7 @@ const PatientsList = () => {
           <h2>Pacientes</h2>
           <p>Gestión del directorio de pacientes</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/pacientes/nuevo')}>
+        <button className="btn btn-primary" onClick={() => navigate('/app/pacientes/nuevo')}>
           <Plus size={18} /> Nuevo Paciente
         </button>
       </div>
@@ -88,7 +88,7 @@ const PatientsList = () => {
               <div 
                 key={patient.id_paciente || patient.id} 
                 className="patient-card"
-                onClick={() => navigate(`/pacientes/${patient.id_paciente || patient.id}`)}
+                onClick={() => navigate(`/app/pacientes/${patient.id_paciente || patient.id}`)}
               >
                 <div className="patient-avatar">
                   <User size={24} />
@@ -102,7 +102,7 @@ const PatientsList = () => {
                   </div>
                 </div>
                 <div className="action-icon" style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); navigate(`/pacientes/${patient.id_paciente || patient.id}?edit=true`); }} title="Editar Paciente">
+                  <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); navigate(`/app/pacientes/${patient.id_paciente || patient.id}?edit=true`); }} title="Editar Paciente">
                     <Edit size={18} />
                   </button>
                   <button className="btn btn-danger" style={{ padding: '6px', display: 'flex', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, id: patient.id_paciente || patient.id, name: `${patient.usuario?.primer_nombre || patient.primer_nombre || patient.nombre} ${patient.usuario?.primer_apellido || patient.primer_apellido || patient.apellido}` }); }} title="Eliminar Paciente">

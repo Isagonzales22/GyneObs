@@ -7,6 +7,24 @@
   overflow: hidden;
 }
 
+.auth-nav{
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px;
+  z-index: 20;
+}
+
+.auth-brand img{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
+.auth-links{ display:flex; gap:12px; align-items:center; }
+.auth-links a{ color:var(--text-light); font-weight:600; padding:6px 10px; border-radius:8px; }
+.auth-links a:first-child{ background:transparent; border:2px solid rgba(255,255,255,0.12); }
+
+
 .login-card {
   width: 100%;
   max-width: 400px;
@@ -31,6 +49,8 @@
   margin: 0 auto 15px;
   box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
 }
+
+.login-logo-img{ width:64px; height:64px; object-fit:contain; border-radius:10px; }
 
 .login-header h2 {
   font-size: 28px;

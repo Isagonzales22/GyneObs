@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Home from './pages/Home';
 import UsersRoles from './pages/UsersRoles';
 import PatientsList from './pages/PatientsList';
 import PatientDetail from './pages/PatientDetail';
@@ -17,7 +18,9 @@ import Profile from './pages/Profile';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const auth = useAuth();
+  if (!auth) return <Navigate to="/login" />;
+  const { user, loading } = auth;
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--primary-pink)' }}>Cargando Sistema...</div>;
   return user ? children : <Navigate to="/login" />;
 };
@@ -27,11 +30,11 @@ const PrivateRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
-      
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+
+      <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="usuarios" element={<UsersRoles />} />
         <Route path="pacientes" element={<PatientsList />} />

@@ -110,7 +110,7 @@ const PatientDetail = () => {
       };
       const res = await pacienteService.create(payload);
       setAlertModal({ show: true, message: 'Paciente creado exitosamente', type: 'success' });
-      setTimeout(() => navigate('/pacientes'), 1500);
+      setTimeout(() => navigate('/app/pacientes'), 1500);
     } catch (error) {
       console.error("Error creating patient", error);
       setAlertModal({ show: true, message: 'Error al crear paciente', type: 'error' });
@@ -171,7 +171,7 @@ const PatientDetail = () => {
       <>
         <div className="patient-detail-container animate-fade-in">
           <div className="detail-header">
-            <button className="back-btn" onClick={() => navigate('/pacientes')}>
+            <button className="back-btn" onClick={() => navigate('/app/pacientes')}>
               <ArrowLeft size={20} /> Cancelar
             </button>
           </div>
@@ -267,7 +267,7 @@ const PatientDetail = () => {
       <div className="patient-detail-container animate-fade-in" style={{ padding: '40px', textAlign: 'center' }}>
         <h2>Paciente no encontrado</h2>
         <p>El paciente que buscas no existe o no se ha cargado correctamente.</p>
-        <button className="btn btn-primary" onClick={() => navigate('/pacientes')} style={{ marginTop: '20px' }}>Volver a Pacientes</button>
+        <button className="btn btn-primary" onClick={() => navigate('/app/pacientes')} style={{ marginTop: '20px' }}>Volver a Pacientes</button>
       </div>
     );
   }
@@ -276,7 +276,7 @@ const PatientDetail = () => {
     <>
       <div className="patient-detail-container animate-fade-in">
         <div className="detail-header">
-          <button className="back-btn" onClick={() => navigate('/pacientes')}>
+          <button className="back-btn" onClick={() => navigate('/app/pacientes')}>
             <ArrowLeft size={20} /> Volver
           </button>
           <div className="actions">

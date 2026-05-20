@@ -174,19 +174,19 @@ const Dashboard = () => {
                   <h3>Acciones Rápidas</h3>
                 </div>
                 <div className="actions-grid">
-                  <button className="action-btn" onClick={()=>navigate('/pacientes/nuevo')}>
+                  <button className="action-btn" onClick={()=>navigate('/app/pacientes/nuevo')}>
                     <Users size={24} />
                     <span>Nuevo Paciente</span>
                   </button>
-                  <button className="action-btn" onClick={()=>navigate('/citas')}>
+                  <button className="action-btn" onClick={()=>navigate('/app/citas')}>
                     <Calendar size={24} />
                     <span>Agendar Cita</span>
                   </button>
-                  <button className="action-btn" onClick={()=>navigate('/cirugias')}>
+                  <button className="action-btn" onClick={()=>navigate('/app/cirugias')}>
                     <Activity size={24} />
                     <span>Prog. Cirugía</span>
                   </button>
-                  <button className="action-btn" onClick={()=>navigate('/insumos')}>
+                  <button className="action-btn" onClick={()=>navigate('/app/insumos')}>
                     <Package size={24} />
                     <span>Inventario</span>
                   </button>

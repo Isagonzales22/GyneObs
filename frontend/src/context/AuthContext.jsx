@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -35,10 +35,17 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(usuario));
       
       setUser(usuario);
-      return { success: true };
+      return { success: true, usuario };
     } catch (error) {
       console.error('Login error', error);
-      return { success: false, error: error.response?.data?.message || 'Error de conexión' };
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message;
+      return {
+        success: false,
+        error: status === 401
+          ? serverMessage || 'Usuario o contraseña incorrectos'
+          : serverMessage || 'Error de conexión',
+      };
     }
   };
 
