@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
-const { Usuario, Rol } = require("../../models");
+const { Usuario, Rol, Paciente } = require("../../models");
 const generarToken = require("../utils/generarToken");
+const { normalizarRol } = require("../utils/roles");
 
 const loginManual = async (req, res) => {
   try {
@@ -118,13 +119,35 @@ const register = async (req, res) => {
       estado: true,
     });
 
-    const token = generarToken(nuevoUsuario);
+    const rolRegistro = await Rol.findByPk(id_rol);
+    if (normalizarRol(rolRegistro?.nombre_rol) === "PACIENTE" || Number(id_rol) === 3) {
+      const existsPaciente = await Paciente.findOne({ where: { id_usuario: nuevoUsuario.id_usuario } });
+      if (!existsPaciente) {
+        const count = await Paciente.count();
+        const codeNum = String(count + 1).padStart(4, "0");
+        await Paciente.create({
+          id_usuario: nuevoUsuario.id_usuario,
+          codigo_paciente: `PAC-${codeNum}`,
+          ocupacion: "Ninguna",
+          estado_civil: "Soltera",
+          seguro_medico: "SUS",
+          tipo_sangre: "O+",
+          observaciones: "Registro automático",
+        });
+      }
+    }
+
+    const usuarioConRol = await Usuario.findByPk(nuevoUsuario.id_usuario, {
+      include: [{ model: Rol, as: "rol" }],
+    });
+
+    const token = generarToken(usuarioConRol);
 
     res.status(201).json({
       ok: true,
       message: "Usuario registrado exitosamente",
       token,
-      usuario: nuevoUsuario,
+      usuario: usuarioConRol,
     });
   } catch (error) {
     res.status(500).json({

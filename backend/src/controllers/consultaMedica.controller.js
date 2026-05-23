@@ -1,4 +1,4 @@
-const { ConsultaMedica, Paciente, Medico, HistoriaClinica } = require("../../models");
+const { ConsultaMedica, Paciente, Medico, HistoriaClinica, Receta, DetalleReceta } = require("../../models");
 
 const crearConsultaMedica = async (req, res) => {
   try {
@@ -45,6 +45,11 @@ const obtenerConsultaMedica = async (req, res) => {
         { model: Paciente, as: "paciente" },
         { model: Medico, as: "medico" },
         { model: HistoriaClinica, as: "historiaClinica" },
+        {
+          model: Receta,
+          as: "receta",
+          include: [{ model: DetalleReceta, as: "detalleReceta" }],
+        },
       ],
     });
 
@@ -60,6 +65,34 @@ const obtenerConsultaMedica = async (req, res) => {
     res.status(500).json({
       ok: false,
       message: "Error al obtener consulta médica",
+      error: error.message,
+    });
+  }
+};
+
+const obtenerConsultasPorHistoria = async (req, res) => {
+  try {
+    const { historiaId } = req.params;
+    const consultas = await ConsultaMedica.findAll({
+      where: { id_historia_clinica: historiaId },
+      include: [
+        { model: Paciente, as: "paciente" },
+        { model: Medico, as: "medico" },
+        { model: HistoriaClinica, as: "historiaClinica" },
+        {
+          model: Receta,
+          as: "receta",
+          include: [{ model: DetalleReceta, as: "detalleReceta" }],
+        },
+      ],
+      order: [["fecha_consulta", "DESC"]],
+    });
+
+    res.json({ ok: true, consultas });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      message: "Error al obtener consultas por historia",
       error: error.message,
     });
   }
@@ -122,6 +155,7 @@ module.exports = {
   crearConsultaMedica,
   listarConsultasMedicas,
   obtenerConsultaMedica,
+  obtenerConsultasPorHistoria,
   actualizarConsultaMedica,
   eliminarConsultaMedica,
 };

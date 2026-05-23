@@ -1,4 +1,5 @@
 const { Cita, Paciente, Medico, TipoConsulta, Usuario } = require("../../models");
+const { esPaciente } = require("../utils/roles");
 
 const crearCita = async (req, res) => {
   try {
@@ -21,13 +22,22 @@ const crearCita = async (req, res) => {
 const listarCitas = async (req, res) => {
   try {
     let whereClause = {};
-    if (req.usuario?.rol?.nombre_rol === "PACIENTE") {
-      const paciente = await Paciente.findOne({ where: { id_usuario: req.usuario.id_usuario } });
-      if (paciente) {
-        whereClause.id_paciente = paciente.id_paciente;
-      } else {
-        return res.json({ ok: true, citas: [] });
+    if (esPaciente(req.usuario)) {
+      let paciente = await Paciente.findOne({ where: { id_usuario: req.usuario.id_usuario } });
+      if (!paciente) {
+        const count = await Paciente.count();
+        const codeNum = String(count + 1).padStart(4, "0");
+        paciente = await Paciente.create({
+          id_usuario: req.usuario.id_usuario,
+          codigo_paciente: `PAC-${codeNum}`,
+          ocupacion: "Ninguna",
+          estado_civil: "Soltera",
+          seguro_medico: "SUS",
+          tipo_sangre: "O+",
+          observaciones: "Registro automático al consultar citas",
+        });
       }
+      whereClause.id_paciente = paciente.id_paciente;
     }
 
     const citas = await Cita.findAll({
@@ -85,7 +95,7 @@ const obtenerCita = async (req, res) => {
       });
     }
 
-    if (req.usuario?.rol?.nombre_rol === "PACIENTE") {
+    if (esPaciente(req.usuario)) {
       const paciente = await Paciente.findOne({ where: { id_usuario: req.usuario.id_usuario } });
       if (!paciente || cita.id_paciente !== paciente.id_paciente) {
         return res.status(403).json({

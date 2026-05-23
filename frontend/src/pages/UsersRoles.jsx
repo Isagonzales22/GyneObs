@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { usuarioService } from '../services/api';
-import { Shield, User, Search, Trash2, Plus, X, Save, Edit2, Mail, Phone, Calendar as CalendarIcon } from 'lucide-react';
+import { Shield, Search, Trash2, Plus, X, Save, Edit2, Mail, Phone, Calendar as CalendarIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ProfilePhotoPicker from '../components/ProfilePhotoPicker';
+import UserAvatar from '../components/UserAvatar';
 
 const UsersRoles = () => {
   const { user } = useAuth();
@@ -14,6 +16,7 @@ const UsersRoles = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, name: '' });
   const [alertModal, setAlertModal] = useState({ show: false, message: '', type: 'success' });
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [formData, setFormData] = useState({
     id_rol: '',
     correo_electronico: '',
@@ -34,25 +37,29 @@ const UsersRoles = () => {
   const roleMap = {
     'ADMINISTRADOR': 1,
     'MEDICO': 2,
-    'PACIENTE': 4
+    'PACIENTE': 3,
+    'SECRETARIA': 4
   };
 
   const getCurrentRole = (usuario) => {
     if (usuario.rol?.nombre_rol) {
       if (usuario.rol.nombre_rol.startsWith('MEDICO')) return 'MEDICO';
       if (usuario.rol.nombre_rol.startsWith('PACIENTE')) return 'PACIENTE';
+      if (usuario.rol.nombre_rol.startsWith('SECRETARIA')) return 'SECRETARIA';
       return usuario.rol.nombre_rol;
     }
     if (typeof usuario.rol === 'string') {
       if (usuario.rol.startsWith('MEDICO')) return 'MEDICO';
       if (usuario.rol.startsWith('PACIENTE')) return 'PACIENTE';
+      if (usuario.rol.startsWith('SECRETARIA')) return 'SECRETARIA';
       return usuario.rol;
     }
     if (usuario.id_rol) {
-      if (usuario.id_rol === 1) return 'ADMINISTRADOR';
-      if (usuario.id_rol === 2 || usuario.id_rol === 3) return 'MEDICO';
-      if (usuario.id_rol === 4) return 'PACIENTE';
-      const roleEntry = Object.entries(roleMap).find(([_, id]) => id === usuario.id_rol);
+      if (Number(usuario.id_rol) === 1) return 'ADMINISTRADOR';
+      if (Number(usuario.id_rol) === 2) return 'MEDICO';
+      if (Number(usuario.id_rol) === 3) return 'PACIENTE';
+      if (Number(usuario.id_rol) === 4) return 'SECRETARIA';
+      const roleEntry = Object.entries(roleMap).find(([_, id]) => id === Number(usuario.id_rol));
       if (roleEntry) return roleEntry[0];
     }
     return 'PACIENTE';
@@ -135,7 +142,8 @@ const UsersRoles = () => {
         telefono: formData.telefono || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
         sexo: formData.sexo || null,
-        direccion: formData.direccion || null
+        direccion: formData.direccion || null,
+        foto_perfil_url: fotoPerfilUrl || null,
       };
 
       await usuarioService.create(payload);
@@ -170,7 +178,8 @@ const UsersRoles = () => {
         telefono: formData.telefono || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
         sexo: formData.sexo || null,
-        direccion: formData.direccion || null
+        direccion: formData.direccion || null,
+        foto_perfil_url: fotoPerfilUrl || null,
       };
 
       // Si hay contraseña nueva, incluirla
@@ -223,10 +232,12 @@ const UsersRoles = () => {
       sexo: user.sexo || '',
       direccion: user.direccion || ''
     });
+    setFotoPerfilUrl(user.foto_perfil_url || null);
     setShowEditModal(true);
   };
 
   const resetForm = () => {
+    setFotoPerfilUrl(null);
     setFormData({
       id_rol: '',
       correo_electronico: '',
@@ -390,20 +401,7 @@ const UsersRoles = () => {
                     return (
                       <tr key={userId} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                         <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div className="avatar" style={{ 
-                            width: '32px', 
-                            height: '32px', 
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-pink) 100%)',
-                            color: 'white',
-                            fontWeight: 'bold'
-                          }}>
-                            {nombreCompleto.charAt(0) || 'U'}
-                          </div>
+                          <UserAvatar user={u} size={32} fallbackName={nombreCompleto} />
                           <span>{nombreCompleto || 'Sin nombre'}</span>
                         </td>
                         <td style={{ padding: '12px' }}>{email}</td>
@@ -419,10 +417,12 @@ const UsersRoles = () => {
                               fontWeight: '600',
                               backgroundColor: currentRole === 'ADMINISTRADOR' ? 'rgba(255, 105, 180, 0.15)' : 
                                             currentRole === 'MEDICO' ? 'rgba(0, 191, 255, 0.15)' :
-                                            'rgba(0, 0, 0, 0.05)',
+                                            currentRole === 'PACIENTE' ? 'rgba(40, 199, 111, 0.15)' :
+                                            'rgba(118, 75, 162, 0.15)',
                               color: currentRole === 'ADMINISTRADOR' ? '#d63384' : 
                                      currentRole === 'MEDICO' ? '#0d6efd' :
-                                     '#6c757d',
+                                     currentRole === 'PACIENTE' ? '#28c76f' :
+                                     '#764ba2',
                               border: '1px solid rgba(0,0,0,0.1)',
                               cursor: isUpdating ? 'wait' : 'pointer',
                               opacity: isUpdating ? 0.6 : 1,
@@ -432,6 +432,7 @@ const UsersRoles = () => {
                             <option value="ADMINISTRADOR">👑 ADMINISTRADOR</option>
                             <option value="MEDICO">👨‍⚕️ MEDICO</option>
                             <option value="PACIENTE">🩺 PACIENTE</option>
+                            <option value="SECRETARIA">💼 SECRETARIA</option>
                           </select>
                           {isUpdating && (
                             <span style={{ marginLeft: '8px', fontSize: '11px', color: '#666' }}>
@@ -538,6 +539,11 @@ const UsersRoles = () => {
             </div>
             
             <form onSubmit={handleCreateUser}>
+              <ProfilePhotoPicker
+                value={fotoPerfilUrl}
+                onChange={setFotoPerfilUrl}
+                label="Foto de perfil (opcional)"
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 
                 <div className="form-group">
@@ -551,7 +557,8 @@ const UsersRoles = () => {
                     <option value="">-- Seleccionar Rol --</option>
                     <option value="1">👑 ADMINISTRADOR</option>
                     <option value="2">👨‍⚕️ MEDICO</option>
-                    <option value="4">🩺 PACIENTE</option>
+                    <option value="3">🩺 PACIENTE</option>
+                    <option value="4">💼 SECRETARIA</option>
                   </select>
                 </div>
 
@@ -749,6 +756,11 @@ const UsersRoles = () => {
             </div>
             
             <form onSubmit={handleEditUser}>
+              <ProfilePhotoPicker
+                value={fotoPerfilUrl}
+                onChange={setFotoPerfilUrl}
+                label="Foto de perfil"
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 
                 <div className="form-group">
@@ -762,7 +774,8 @@ const UsersRoles = () => {
                     <option value="">-- Seleccionar Rol --</option>
                     <option value="1">👑 ADMINISTRADOR</option>
                     <option value="2">👨‍⚕️ MEDICO</option>
-                    <option value="4">🩺 PACIENTE</option>
+                    <option value="3">🩺 PACIENTE</option>
+                    <option value="4">💼 SECRETARIA</option>
                   </select>
                 </div>
 

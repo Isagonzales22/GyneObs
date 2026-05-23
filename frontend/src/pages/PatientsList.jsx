@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, User, Phone, Calendar, ChevronRight, Trash2, Edit } from 'lucide-react';
+import { Search, Plus, Phone, Calendar, ChevronRight, Trash2, Edit } from 'lucide-react';
 import { pacienteService } from '../services/api';
+import UserAvatar from '../components/UserAvatar';
 import './Patients.css';
 
 const PatientsList = () => {
@@ -26,7 +27,6 @@ const PatientsList = () => {
       }
     };
 
-    fetchPatients();
     fetchPatients();
   }, []);
 
@@ -90,9 +90,12 @@ const PatientsList = () => {
                 className="patient-card"
                 onClick={() => navigate(`/app/pacientes/${patient.id_paciente || patient.id}`)}
               >
-                <div className="patient-avatar">
-                  <User size={24} />
-                </div>
+                <UserAvatar
+                  user={patient.usuario || patient}
+                  size={52}
+                  className="patient-avatar"
+                  fallbackName={patient.usuario?.primer_nombre || patient.primer_nombre || 'P'}
+                />
                 <div className="patient-info">
                   <h3>{patient.usuario?.primer_nombre || patient.primer_nombre || patient.nombre} {patient.usuario?.primer_apellido || patient.primer_apellido || patient.apellido}</h3>
                   <div className="patient-details">

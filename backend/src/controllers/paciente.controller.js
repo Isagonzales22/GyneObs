@@ -3,7 +3,11 @@ const { Paciente, Usuario } = require("../../models");
 const listarPacientes = async (req, res) => {
   try {
     const pacientes = await Paciente.findAll({
-      include: [{ model: Usuario, as: "usuario" }],
+      include: [{
+        model: Usuario,
+        as: "usuario",
+        where: { id_rol: 3 },
+      }],
       order: [["created_at", "DESC"]],
     });
 

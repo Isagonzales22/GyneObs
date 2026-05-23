@@ -1,13 +1,168 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Video, FileText, Upload, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  BookOpen, Video, FileText, Upload, Trash2, ExternalLink, Eye,
+  Image as ImageIcon, Pencil, X, Save
+} from 'lucide-react';
 import { contenidoEducativoService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { esPaciente } from '../utils/roles';
 import './Patients.css';
+import './Educacion.css';
+
+const TIPOS = {
+  Video: { label: 'Video', icon: Video, color: '#0d6efd', bg: '#e7f1ff' },
+  Documento: { label: 'Documento', icon: FileText, color: '#6f42c1', bg: '#f3ecff' },
+  Infografia: { label: 'Infografía', icon: ImageIcon, color: '#fd7e14', bg: '#fff4e6' },
+};
+
+const FILTROS = [
+  { id: 'todos', label: 'Todos', icon: BookOpen },
+  { id: 'Video', label: 'Videos', icon: Video },
+  { id: 'Documento', label: 'Documentos', icon: FileText },
+  { id: 'Infografia', label: 'Infografías', icon: ImageIcon },
+];
+
+const normalizarTipo = (tipo) => {
+  const t = String(tipo || 'Documento').toLowerCase();
+  if (t.includes('video')) return 'Video';
+  if (t.includes('infograf')) return 'Infografia';
+  return 'Documento';
+};
+
+const getEnlaceContenido = (item) => {
+  if (!item) return '';
+  if (item.enlace_url) return item.enlace_url;
+  const tipo = normalizarTipo(item.tipo_contenido);
+  if (tipo === 'Video') return item.url_video || '';
+  if (tipo === 'Infografia') return item.imagen_portada_url || item.archivo_url || '';
+  return item.archivo_url || item.url_video || '';
+};
+
+const getAutorNombre = (item) =>
+  item?.autorUsuario?.primer_nombre ||
+  item?.creador?.primer_nombre ||
+  item?.autor ||
+  'Clínica';
+
+const buildPayload = (form, userId) => {
+  const tipo = form.tipo_contenido;
+  const url = form.enlace_url?.trim() || '';
+  const payload = {
+    titulo: form.titulo,
+    descripcion: form.descripcion || null,
+    tipo_contenido: tipo,
+    autor: userId,
+    estado: 'PUBLICADO',
+    fecha_publicacion: new Date().toISOString().slice(0, 10),
+    url_video: null,
+    archivo_url: null,
+    imagen_portada_url: null,
+  };
+  if (tipo === 'Video') {
+    payload.url_video = url;
+  } else if (tipo === 'Infografia') {
+    payload.archivo_url = url;
+    payload.imagen_portada_url = url;
+  } else {
+    payload.archivo_url = url;
+  }
+  return payload;
+};
+
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return null;
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+};
+
+const isImageUrl = (url) => /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(url || '');
+
+const ContenidoPreview = ({ item }) => {
+  const tipo = normalizarTipo(item.tipo_contenido);
+  const enlace = getEnlaceContenido(item);
+  const config = TIPOS[tipo] || TIPOS.Documento;
+  const Icon = config.icon;
+
+  if (!enlace) {
+    return (
+      <div className="educacion-preview-box">
+        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+          <Icon size={40} color={config.color} />
+          <p style={{ marginTop: '12px' }}>Sin enlace disponible</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (tipo === 'Video') {
+    const embed = getYoutubeEmbedUrl(enlace);
+    if (embed) {
+      return (
+        <div className="educacion-preview-box">
+          <iframe title={item.titulo} src={embed} allowFullScreen />
+        </div>
+      );
+    }
+    return (
+      <div className="educacion-preview-box">
+        <a href={enlace} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+          <Video size={18} /> Reproducir video
+        </a>
+      </div>
+    );
+  }
+
+  if (tipo === 'Infografia' && isImageUrl(enlace)) {
+    return (
+      <div className="educacion-preview-box">
+        <img src={enlace} alt={item.titulo} />
+      </div>
+    );
+  }
+
+  if (tipo === 'Infografia') {
+    return (
+      <div className="educacion-preview-box">
+        <ImageIcon size={48} color={config.color} />
+        <a href={enlace} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ marginTop: '12px' }}>
+          Ver infografía
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="educacion-preview-box">
+      <FileText size={48} color={config.color} />
+      <a href={enlace} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ marginTop: '12px' }}>
+        Abrir documento
+      </a>
+    </div>
+  );
+};
 
 const Educacion = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const userRoleId = Number(user?.rol?.id_rol ?? user?.id_rol);
+  const userId = user?.id_usuario || user?.id;
+
+  useEffect(() => {
+    if (userRoleId === 4) navigate('/app/');
+  }, [userRoleId, navigate]);
+
+  const canManage = userRoleId === 1 || userRoleId === 2;
+  const isPacienteUser = esPaciente(user);
+
   const [contenidos, setContenidos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [viewModal, setViewModal] = useState({ show: false, item: null });
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, name: '' });
   const [alertModal, setAlertModal] = useState({ show: false, message: '', type: 'success' });
   const [formData, setFormData] = useState({
@@ -15,147 +170,432 @@ const Educacion = () => {
     descripcion: '',
     tipo_contenido: 'Documento',
     enlace_url: '',
-    id_creador: ''
   });
 
+  const cargarContenidos = async () => {
+    try {
+      const contRes = await contenidoEducativoService.getAll();
+      const data = contRes.data?.contenidos || contRes.data || [];
+      const activos = (Array.isArray(data) ? data : []).filter(
+        (c) => (c.estado || 'PUBLICADO') !== 'ARCHIVADO'
+      );
+      setContenidos(activos);
+    } catch (error) {
+      console.error('Error fetching contenidos', error);
+      setAlertModal({ show: true, message: 'No se pudo cargar el contenido educativo', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [contRes, uRes] = await Promise.all([
-          contenidoEducativoService.getAll(),
-          import('../services/api').then(m => m.usuarioService.getAll())
-        ]);
-        const data = contRes.data?.contenidos || contRes.data || [];
-        setContenidos(Array.isArray(data) ? data : []);
+    cargarContenidos();
+  }, []);
 
-        const usersData = uRes.data?.usuarios || uRes.data || [];
-        setUsuarios(Array.isArray(usersData) ? usersData : []);
-      } catch (error) {
-        console.error("Error fetching data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [showForm]);
+  const contenidosFiltrados = useMemo(() => {
+    if (filtroTipo === 'todos') return contenidos;
+    return contenidos.filter((c) => normalizarTipo(c.tipo_contenido) === filtroTipo);
+  }, [contenidos, filtroTipo]);
 
-  const handleCreate = async (e) => {
+  const conteosPorTipo = useMemo(() => ({
+    todos: contenidos.length,
+    Video: contenidos.filter((c) => normalizarTipo(c.tipo_contenido) === 'Video').length,
+    Documento: contenidos.filter((c) => normalizarTipo(c.tipo_contenido) === 'Documento').length,
+    Infografia: contenidos.filter((c) => normalizarTipo(c.tipo_contenido) === 'Infografia').length,
+  }), [contenidos]);
+
+  const resetForm = () => {
+    setFormData({ titulo: '', descripcion: '', tipo_contenido: 'Documento', enlace_url: '' });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const abrirEdicion = (item) => {
+    setFormData({
+      titulo: item.titulo || '',
+      descripcion: item.descripcion || '',
+      tipo_contenido: normalizarTipo(item.tipo_contenido),
+      enlace_url: getEnlaceContenido(item),
+    });
+    setEditingId(item.id_contenido || item.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await contenidoEducativoService.create(formData);
-      setAlertModal({ show: true, message: 'Material educativo subido exitosamente', type: 'success' });
-      setShowForm(false);
-      setFormData({ titulo: '', descripcion: '', tipo_contenido: 'Documento', enlace_url: '', id_creador: '' });
+      const payload = buildPayload(formData, userId);
+      if (editingId) {
+        await contenidoEducativoService.update(editingId, payload);
+        setAlertModal({ show: true, message: 'Material actualizado correctamente', type: 'success' });
+      } else {
+        await contenidoEducativoService.create(payload);
+        setAlertModal({ show: true, message: 'Material educativo publicado exitosamente', type: 'success' });
+      }
+      resetForm();
+      await cargarContenidos();
     } catch (error) {
       console.error(error);
-      setAlertModal({ show: true, message: 'Error al subir material', type: 'error' });
+      setAlertModal({
+        show: true,
+        message: error.response?.data?.message || 'Error al guardar el material',
+        type: 'error',
+      });
     }
   };
 
   const confirmDelete = async () => {
     try {
-      // In case we don't have it exported, fetch direct
-      const res = await fetch(`http://localhost:3000/api/contenidos-educativos/${deleteModal.id}`, { method: 'DELETE' });
-      if(!res.ok) throw new Error('Delete failed');
+      await contenidoEducativoService.delete(deleteModal.id);
       setDeleteModal({ show: false, id: null, name: '' });
-      
-      const contRes = await contenidoEducativoService.getAll();
-      const data = contRes.data?.contenidos || contRes.data || [];
-      setContenidos(Array.isArray(data) ? data : []);
+      setAlertModal({ show: true, message: 'Material eliminado correctamente', type: 'success' });
+      await cargarContenidos();
     } catch (error) {
       console.error(error);
       setAlertModal({ show: true, message: 'Error al eliminar material', type: 'error' });
     }
   };
 
+  const renderTarjeta = (c) => {
+    const tipo = normalizarTipo(c.tipo_contenido);
+    const config = TIPOS[tipo] || TIPOS.Documento;
+    const Icon = config.icon;
+    const enlace = getEnlaceContenido(c);
+
+    return (
+      <article key={c.id_contenido || c.id} className="educacion-card">
+        <div className="educacion-card-cover" style={{ background: `linear-gradient(145deg, ${config.bg}, white)` }}>
+          <span className="educacion-card-tipo-label" style={{ color: config.color }}>{config.label}</span>
+          <div className="educacion-card-cover-icon">
+            <Icon size={28} color={config.color} />
+          </div>
+        </div>
+        <div className="educacion-card-body">
+          <h3>{c.titulo}</h3>
+          <p className="educacion-card-meta">Por {getAutorNombre(c)}</p>
+          {c.descripcion && (
+            <p className="educacion-card-meta">
+              {c.descripcion.length > 80 ? `${c.descripcion.slice(0, 80)}…` : c.descripcion}
+            </p>
+          )}
+        </div>
+        <div className="educacion-card-actions">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setViewModal({ show: true, item: c })}
+          >
+            <Eye size={16} /> Ver
+          </button>
+          {enlace && (
+            <a
+              href={enlace}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+            >
+              <ExternalLink size={16} /> Abrir
+            </a>
+          )}
+          {canManage && (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => abrirEdicion(c)}
+              >
+                <Pencil size={16} /> Editar
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={() =>
+                  setDeleteModal({ show: true, id: c.id_contenido || c.id, name: c.titulo })
+                }
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
+        </div>
+      </article>
+    );
+  };
+
   return (
     <>
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="page-header">
-        <div className="header-text">
+      <div className="educacion-page animate-fade-in">
+        <header className="educacion-hero">
           <h2>Contenido Educativo</h2>
-          <p>Material de apoyo para pacientes</p>
+          <p>
+            {isPacienteUser
+              ? 'Explora videos, documentos e infografías sobre salud gineco-obstétrica.'
+              : 'Publica y organiza material de apoyo para tus pacientes.'}
+          </p>
+          {canManage && (
+            <div className="educacion-hero-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  if (showForm && !editingId) resetForm();
+                  else {
+                    setEditingId(null);
+                    setFormData({ titulo: '', descripcion: '', tipo_contenido: 'Documento', enlace_url: '' });
+                    setShowForm(!showForm);
+                  }
+                }}
+              >
+                <Upload size={18} /> {showForm ? 'Cancelar' : 'Nuevo material'}
+              </button>
+            </div>
+          )}
+        </header>
+
+        <div className="educacion-stats">
+          {FILTROS.map((f) => {
+            const FIcon = f.icon;
+            const cfg = f.id === 'todos' ? { color: '#ff69b4', bg: '#fff0f6' } : TIPOS[f.id] || TIPOS.Documento;
+            return (
+              <div key={f.id} className="educacion-stat-card">
+                <div className="educacion-stat-icon" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
+                  <FIcon size={22} />
+                </div>
+                <div>
+                  <strong>{conteosPorTipo[f.id] ?? 0}</strong>
+                  <span>{f.label}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          <Upload size={18} /> {showForm ? 'Cancelar' : 'Subir Material'}
-        </button>
+
+        <div className="educacion-layout">
+          <aside className="educacion-sidebar">
+            <h4>Filtrar por tipo</h4>
+            <div className="educacion-filtros">
+              {FILTROS.map((f) => {
+                const FIcon = f.icon;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`educacion-filtro-btn ${filtroTipo === f.id ? 'active' : ''}`}
+                    onClick={() => setFiltroTipo(f.id)}
+                  >
+                    <FIcon size={16} />
+                    {f.label}
+                    <span style={{ marginLeft: 'auto', opacity: 0.8 }}>({conteosPorTipo[f.id]})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <div className="educacion-main">
+            {canManage && showForm && (
+              <div className="educacion-form-card animate-fade-in">
+                <h4>
+                  {editingId ? <Pencil size={20} /> : <Upload size={20} />}
+                  {editingId ? 'Editar material' : 'Publicar nuevo material'}
+                </h4>
+                <form onSubmit={handleSubmit} className="educacion-form-grid">
+                  <div className="form-group">
+                    <label>Título</label>
+                    <input
+                      type="text"
+                      value={formData.titulo}
+                      onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de contenido</label>
+                    <select
+                      value={formData.tipo_contenido}
+                      onChange={(e) => setFormData({ ...formData, tipo_contenido: e.target.value })}
+                    >
+                      <option value="Video">Video</option>
+                      <option value="Documento">Documento / Artículo</option>
+                      <option value="Infografia">Infografía</option>
+                    </select>
+                  </div>
+                  <div className="form-group full">
+                    <label>Enlace (URL del video, PDF o imagen)</label>
+                    <input
+                      type="url"
+                      value={formData.enlace_url}
+                      onChange={(e) => setFormData({ ...formData, enlace_url: e.target.value })}
+                      placeholder="https://..."
+                      required
+                    />
+                  </div>
+                  <div className="form-group full">
+                    <label>Descripción</label>
+                    <textarea
+                      value={formData.descripcion}
+                      onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                      rows="3"
+                    />
+                  </div>
+                  <div className="form-group full" style={{ display: 'flex', gap: '10px' }}>
+                    <button type="submit" className="btn btn-primary">
+                      <Save size={18} /> {editingId ? 'Guardar cambios' : 'Publicar'}
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                      <X size={18} /> Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {loading ? (
+              <p style={{ padding: '24px', textAlign: 'center' }}>Cargando materiales...</p>
+            ) : (
+              <div className="educacion-grid">
+                {contenidosFiltrados.length === 0 ? (
+                  <div className="educacion-empty">
+                    <BookOpen size={44} color="var(--text-muted)" style={{ marginBottom: '12px' }} />
+                    <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+                      {filtroTipo === 'todos'
+                        ? 'No hay contenidos educativos disponibles.'
+                        : `No hay ${FILTROS.find((f) => f.id === filtroTipo)?.label?.toLowerCase()} por ahora.`}
+                    </p>
+                  </div>
+                ) : (
+                  contenidosFiltrados.map(renderTarjeta)
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {viewModal.show && viewModal.item && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '16px',
+            }}
+            onClick={() => setViewModal({ show: false, item: null })}
+          >
+            <div className="educacion-modal animate-fade-in" onClick={(e) => e.stopPropagation()}>
+              {(() => {
+                const tipo = normalizarTipo(viewModal.item.tipo_contenido);
+                const config = TIPOS[tipo] || TIPOS.Documento;
+                const Icon = config.icon;
+                return (
+                  <>
+                    <span
+                      className="educacion-tipo-badge"
+                      style={{ backgroundColor: config.bg, color: config.color }}
+                    >
+                      <Icon size={14} />
+                      {config.label}
+                    </span>
+                    <h3 style={{ margin: '12px 0 8px' }}>{viewModal.item.titulo}</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+                      Publicado por {getAutorNombre(viewModal.item)}
+                    </p>
+                    {viewModal.item.descripcion && (
+                      <p style={{ marginTop: '16px', lineHeight: 1.55 }}>{viewModal.item.descripcion}</p>
+                    )}
+                    <ContenidoPreview item={viewModal.item} />
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '20px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setViewModal({ show: false, item: null })}
+                      >
+                        Cerrar
+                      </button>
+                      {getEnlaceContenido(viewModal.item) && (
+                        <a
+                          href={getEnlaceContenido(viewModal.item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-primary"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
+                        >
+                          <ExternalLink size={18} />
+                          {tipo === 'Video' ? 'Ver video completo' : tipo === 'Infografia' ? 'Ver infografía' : 'Abrir documento'}
+                        </a>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {deleteModal.show && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <div className="card animate-fade-in" style={{ padding: '30px', maxWidth: '400px', textAlign: 'center', backgroundColor: 'white' }}>
+              <Trash2 size={48} color="#ea5455" style={{ marginBottom: '15px' }} />
+              <h3>¿Eliminar material?</h3>
+              <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>
+                Vas a eliminar <strong>{deleteModal.name}</strong>. Esta acción no se puede deshacer.
+              </p>
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '25px' }}>
+                <button className="btn btn-secondary" onClick={() => setDeleteModal({ show: false, id: null, name: '' })}>
+                  Cancelar
+                </button>
+                <button className="btn btn-danger" onClick={confirmDelete}>Sí, eliminar</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {showForm && (
-        <div className="card animate-fade-in" style={{ backgroundColor: '#f8f9fa' }}>
-          <h4>Subir Nuevo Material</h4>
-          <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px' }}>
-            <div className="form-group"><label>Título</label><input type="text" value={formData.titulo} onChange={e=>setFormData({...formData, titulo: e.target.value})} required /></div>
-            <div className="form-group"><label>Tipo de Contenido</label>
-              <select value={formData.tipo_contenido} onChange={e=>setFormData({...formData, tipo_contenido: e.target.value})} style={{ padding: '12px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px', width: '100%' }}>
-                <option value="Documento">Documento / Artículo</option>
-                <option value="Video">Video</option>
-                <option value="Infografia">Infografía</option>
-              </select>
-            </div>
-            <div className="form-group"><label>Enlace / URL</label><input type="text" value={formData.enlace_url} onChange={e=>setFormData({...formData, enlace_url: e.target.value})} placeholder="https://..." required /></div>
-            <div className="form-group"><label>Creador (Usuario)</label>
-              <select value={formData.id_creador} onChange={e=>setFormData({...formData, id_creador: e.target.value})} required style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)' }}>
-                <option value="">-- Seleccionar Usuario --</option>
-                {usuarios.map(u => (
-                  <option key={u.id_usuario || u.id} value={u.id_usuario || u.id}>
-                    {u.primer_nombre || u.nombre} {u.primer_apellido || u.apellido}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Descripción</label><textarea value={formData.descripcion} onChange={e=>setFormData({...formData, descripcion: e.target.value})} rows="3"></textarea></div>
-            <button className="btn btn-primary" type="submit" style={{ gridColumn: '1 / -1', justifySelf: 'start', marginTop: '10px' }}>Guardar Material</button>
-          </form>
-        </div>
-      )}
-
-      <div className="patients-grid">
-        {loading ? (
-          <p style={{ padding: '20px' }}>Cargando materiales...</p>
-        ) : contenidos.length === 0 ? (
-          <p style={{ padding: '20px' }}>No hay contenidos educativos disponibles.</p>
-        ) : contenidos.map(c => (
-          <div key={c.id_contenido || c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative' }}>
-            <div style={{ padding: '15px', backgroundColor: 'var(--primary-blue-light)', color: 'white', borderRadius: '12px' }}>
-              {c.tipo_contenido === 'Video' ? <Video size={24}/> : <FileText size={24}/>}
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: '16px', marginBottom: '5px' }}>{c.titulo}</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.tipo_contenido || c.tipo} • Subido por: {c.creador?.primer_nombre || c.autor || 'Clínica'}</p>
-            </div>
-            <button className="btn btn-danger" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setDeleteModal({ show: true, id: c.id_contenido || c.id, name: c.titulo })}>
-              <Trash2 size={16} />
+      {alertModal.show && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+          }}
+        >
+          <div className="card animate-fade-in" style={{ padding: '30px', maxWidth: '400px', textAlign: 'center', backgroundColor: 'white' }}>
+            {alertModal.type === 'error' ? (
+              <Trash2 size={48} color="#ea5455" style={{ marginBottom: '15px' }} />
+            ) : (
+              <BookOpen size={48} color="#28c76f" style={{ marginBottom: '15px' }} />
+            )}
+            <h3>{alertModal.type === 'error' ? 'Error' : 'Éxito'}</h3>
+            <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>{alertModal.message}</p>
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: '20px' }}
+              onClick={() => setAlertModal({ show: false, message: '', type: 'success' })}
+            >
+              Aceptar
             </button>
           </div>
-        ))}
-      </div>
-
-      {deleteModal.show && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card animate-fade-in" style={{ padding: '30px', maxWidth: '400px', textAlign: 'center', backgroundColor: 'white' }}>
-            <Trash2 size={48} color="#ea5455" style={{ marginBottom: '15px' }} />
-            <h3>¿Eliminar Material?</h3>
-            <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>Estás a punto de eliminar <strong>{deleteModal.name}</strong>. Esta acción no se puede deshacer.</p>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '25px' }}>
-              <button className="btn btn-secondary" onClick={() => setDeleteModal({ show: false, id: null, name: '' })}>Cancelar</button>
-              <button className="btn btn-danger" onClick={confirmDelete}>Sí, Eliminar</button>
-            </div>
-          </div>
         </div>
       )}
-    </div>
-
-    {alertModal.show && (
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-        <div className="card animate-fade-in" style={{ padding: '30px', maxWidth: '400px', textAlign: 'center', backgroundColor: 'white' }}>
-          {alertModal.type === 'error' ? <Trash2 size={48} color="#ea5455" style={{ marginBottom: '15px' }} /> : <BookOpen size={48} color="#28c76f" style={{ marginBottom: '15px' }} />}
-          <h3>{alertModal.type === 'error' ? 'Error' : 'Éxito'}</h3>
-          <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>{alertModal.message}</p>
-          <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => setAlertModal({ show: false, message: '', type: 'success' })}>Aceptar</button>
-        </div>
-      </div>
-    )}
     </>
   );
 };

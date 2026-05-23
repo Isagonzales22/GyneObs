@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, UserPlus, User, Eye, EyeOff, CheckCircle, XCircle, Phone, MapPin, Calendar, IdCard } from 'lucide-react';
+import { Mail, Lock, UserPlus, User, Eye, EyeOff, CheckCircle, XCircle, Phone, MapPin, Calendar, IdCard, Camera, Upload, RefreshCw, X, Save } from 'lucide-react';
+import { uploadService } from '../services/api';
+import { extractFotoUrl } from '../utils/photo';
 import './Login.css';
 
 const Register = () => {
@@ -25,8 +27,142 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Estados para foto de perfil en registro
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
+
   const navigate = useNavigate();
   const { register } = useAuth();
+
+  // Limpiar cámara al desmontar
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // Iniciar cámara
+  const startCamera = async () => {
+    setCapturedPhoto(null);
+    setShowCamera(true);
+    try {
+      setTimeout(async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 480, height: 480, facingMode: 'user' },
+            audio: false
+          });
+          setCameraStream(stream);
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (innerErr) {
+          console.error("Error al acceder a stream de cámara:", innerErr);
+          setError('No se pudo activar la cámara. Verifica los permisos del navegador.');
+          setShowCamera(false);
+        }
+      }, 300);
+    } catch (err) {
+      console.error("Error al iniciar cámara:", err);
+      setShowCamera(false);
+    }
+  };
+
+  // Detener cámara
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+    setCapturedPhoto(null);
+  };
+
+  // Capturar foto desde el video
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 480;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      
+      // Dibujar imagen invertida horizontalmente (espejo)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Limpiar transformación
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `profile-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setCapturedPhoto({
+            file,
+            preview: URL.createObjectURL(blob)
+          });
+        }
+      }, 'image/jpeg', 0.95);
+    }
+  };
+
+  // Volver a tomar la foto
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    setTimeout(() => {
+      if (videoRef.current && cameraStream) {
+        videoRef.current.srcObject = cameraStream;
+      }
+    }, 100);
+  };
+
+  // Subir la foto a Cloudinary
+  const handleUploadPhoto = async (file) => {
+    setUploadingPhoto(true);
+    setError('');
+    try {
+      const response = await uploadService.uploadProfilePhoto(file);
+      const url = extractFotoUrl(response);
+      if (url) {
+        setFotoPerfilUrl(url);
+        stopCamera();
+      } else {
+        throw new Error("No se recibió la URL de la foto");
+      }
+    } catch (err) {
+      console.error("Error al subir foto de perfil:", err);
+      setError(err.response?.data?.message || 'Error al subir la imagen a Cloudinary.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Manejar selección de archivo local
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Por favor, selecciona un archivo de imagen válido.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('La imagen excede el tamaño máximo permitido de 5MB.');
+        return;
+      }
+      handleUploadPhoto(file);
+    }
+  };
 
   const [passwordValidation, setPasswordValidation] = useState({
     minLength: false,
@@ -93,7 +229,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Preparar datos para el backend (sin foto)
+      // Preparar datos para el backend
       const userData = {
         id_rol: 3,
         correo_electronico: formData.correo_electronico,
@@ -108,7 +244,7 @@ const Register = () => {
         fecha_nacimiento: formData.fecha_nacimiento || null,
         sexo: formData.sexo || null,
         direccion: formData.direccion || null,
-        foto_perfil_url: null
+        foto_perfil_url: fotoPerfilUrl
       };
 
       console.log("Enviando datos al backend:", userData);
@@ -160,6 +296,84 @@ const Register = () => {
         {success && <div className="error-message" style={{ backgroundColor: 'rgba(40, 199, 111, 0.1)', color: '#28c76f' }}>{success}</div>}
 
         <form onSubmit={handleSubmit} className="login-form">
+          {/* Selector de Foto de Perfil */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{
+              width: '95px',
+              height: '95px',
+              borderRadius: '50%',
+              background: fotoPerfilUrl
+                ? 'none'
+                : 'linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-blue) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '36px',
+              fontWeight: 'bold',
+              overflow: 'hidden',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+              border: '3px solid white',
+              position: 'relative'
+            }}>
+              {fotoPerfilUrl ? (
+                <img 
+                  src={fotoPerfilUrl} 
+                  alt="Perfil" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <User size={48} />
+              )}
+              
+              {uploadingPhoto && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white'
+                }}>
+                  <RefreshCw className="animate-spin" size={24} />
+                </div>
+              )}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid var(--primary-blue)' }}
+                disabled={uploadingPhoto}
+              >
+                <Upload size={13} /> Subir Imagen
+              </button>
+              <button 
+                type="button"
+                className="btn btn-secondary"
+                onClick={startCamera}
+                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid var(--primary-blue)' }}
+                disabled={uploadingPhoto}
+              >
+                <Camera size={13} /> Usar Cámara
+              </button>
+            </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              style={{ display: 'none' }} 
+            />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div className="form-group">
               <label>Primer Nombre *</label>
@@ -414,6 +628,154 @@ const Register = () => {
         </form>
       </div>
       
+      {/* Modal de Cámara para Registro */}
+      {showCamera && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          backgroundColor: 'rgba(0,0,0,0.6)', 
+          backdropFilter: 'blur(4px)',
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1050 
+        }}>
+          <div className="card animate-fade-in" style={{ 
+            padding: '24px', 
+            maxWidth: '430px', 
+            width: '90%', 
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-pink-hover)' }}>
+                <Camera size={20} /> Tomar Foto de Perfil
+              </h3>
+              <button 
+                type="button" 
+                onClick={stopCamera}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ 
+              width: '100%', 
+              aspectRatio: '1', 
+              backgroundColor: '#111', 
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+              marginBottom: '20px'
+            }}>
+              {!capturedPhoto ? (
+                <video 
+                  ref={videoRef}
+                  autoPlay 
+                  playsInline 
+                  muted
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    transform: 'scaleX(-1)'
+                  }}
+                />
+              ) : (
+                <img 
+                  src={capturedPhoto.preview} 
+                  alt="Captura" 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover'
+                  }}
+                />
+              )}
+              
+              {uploadingPhoto && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  gap: '12px',
+                  zIndex: 4
+                }}>
+                  <RefreshCw className="animate-spin" size={32} />
+                  <span style={{ fontWeight: '500' }}>Subiendo a Cloudinary...</span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
+              {!capturedPhoto ? (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={stopCamera}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={capturePhoto}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Camera size={18} /> Capturar Foto
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={retakePhoto}
+                    disabled={uploadingPhoto}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <RefreshCw size={18} /> Volver a Tomar
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={() => handleUploadPhoto(capturedPhoto.file)}
+                    disabled={uploadingPhoto}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Save size={18} /> Usar Foto
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="blob blob-1"></div>
       <div className="blob blob-2"></div>
     </div>

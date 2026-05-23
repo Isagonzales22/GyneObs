@@ -22,6 +22,6 @@ router.get("/:id", verificarToken, obtenerContenido);
 
 router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), actualizarContenido);
 
-router.delete("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), eliminarContenido);
+router.delete("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), eliminarContenido);
 
 module.exports = router;

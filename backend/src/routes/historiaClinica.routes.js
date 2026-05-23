@@ -5,6 +5,7 @@ const {
   listarHistoriasClinicas,
   crearHistoriaClinica,
   obtenerHistoriaPorId,
+  obtenerHistoriaPorPaciente,
   actualizarHistoriaClinica,
   eliminarHistoriaClinica,
 } = require("../controllers/historiaClinica.controller");
@@ -26,6 +27,13 @@ router.post(
   verificarToken,
   permitirRoles("ADMINISTRADOR", "MEDICO"),
   crearHistoriaClinica
+);
+
+router.get(
+  "/paciente/:pacienteId",
+  verificarToken,
+  permitirRoles("ADMINISTRADOR", "MEDICO"),
+  obtenerHistoriaPorPaciente
 );
 
 router.get(

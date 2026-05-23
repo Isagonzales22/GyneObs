@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const { v4: uuidv4 } = require("uuid");
-const { sequelize, Rol, Usuario } = require("./models");
+const { sequelize, Rol, Usuario, Paciente } = require("./models");
 
 async function seedDefaults() {
   try {
@@ -12,16 +12,20 @@ async function seedDefaults() {
       { id_rol: 1, nombre_rol: "ADMINISTRADOR", descripcion: "Administrador del Sistema" },
       { id_rol: 2, nombre_rol: "MEDICO", descripcion: "Médico Especialista" },
       { id_rol: 3, nombre_rol: "PACIENTE", descripcion: "Paciente de la Clínica" },
-      { id_rol: 4, nombre_rol: "ENFERMERA", descripcion: "Personal de Enfermería" },
+      { id_rol: 4, nombre_rol: "SECRETARIA", descripcion: "Secretaria - Gestión de Citas y Pacientes" },
     ];
 
     for (const role of rolesData) {
-      await Rol.findOrCreate({
+      const [rol] = await Rol.findOrCreate({
         where: { id_rol: role.id_rol },
         defaults: role
       });
+      await rol.update({
+        nombre_rol: role.nombre_rol,
+        descripcion: role.descripcion,
+      });
     }
-    console.log("Roles verificados/creados.");
+    console.log("Roles verificados/creados (nombres normalizados).");
 
     // Crear Usuarios por Defecto
     const passwordHash = await bcrypt.hash("123456", 10);
@@ -59,10 +63,39 @@ async function seedDefaults() {
     for (const user of usuariosData) {
       const exists = await Usuario.findOne({ where: { correo_electronico: user.correo_electronico } });
       if (!exists) {
-        await Usuario.create(user);
+        const created = await Usuario.create(user);
         console.log(`Usuario creado: ${user.correo_electronico}`);
+        if (user.id_rol === 3) {
+          await Paciente.findOrCreate({
+            where: { id_usuario: created.id_usuario },
+            defaults: {
+              id_usuario: created.id_usuario,
+              codigo_paciente: "PAC-0001",
+              ocupacion: "Ninguna",
+              estado_civil: "Soltera",
+              seguro_medico: "SUS",
+              tipo_sangre: "O+",
+              observaciones: "Creado por seed",
+            },
+          });
+        }
       } else {
         console.log(`Usuario ya existe: ${user.correo_electronico}`);
+        if (user.id_rol === 3) {
+          const pacienteExists = await Paciente.findOne({ where: { id_usuario: exists.id_usuario } });
+          if (!pacienteExists) {
+            await Paciente.create({
+              id_usuario: exists.id_usuario,
+              codigo_paciente: "PAC-0001",
+              ocupacion: "Ninguna",
+              estado_civil: "Soltera",
+              seguro_medico: "SUS",
+              tipo_sangre: "O+",
+              observaciones: "Creado por seed",
+            });
+            console.log(`Registro de paciente creado para: ${user.correo_electronico}`);
+          }
+        }
       }
     }
 

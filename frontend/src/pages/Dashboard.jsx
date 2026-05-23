@@ -3,7 +3,34 @@ import { useAuth } from '../context/AuthContext';
 import { Users, Calendar, Activity, Package, Clock, TrendingUp } from 'lucide-react';
 import { pacienteService, citaService, cirugiaService, insumoService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { esPaciente, getRolDisplayName } from '../utils/roles';
 import './Dashboard.css';
+
+const inicioDelDia = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const filtrarProximasCitas = (citas) => {
+  const hoy = inicioDelDia();
+  return (Array.isArray(citas) ? citas : [])
+    .filter((c) => {
+      const estado = (c.estado_cita || c.estado || 'PROGRAMADA').toUpperCase();
+      if (['CANCELADA', 'COMPLETADA', 'FINALIZADA'].includes(estado)) return false;
+      const fecha = new Date(c.fecha_cita);
+      return !isNaN(fecha.getTime()) && fecha >= hoy;
+    })
+    .sort((a, b) => new Date(a.fecha_cita) - new Date(b.fecha_cita));
+};
+
+const formatearProximaCita = (cita) => {
+  if (!cita) return 'Ninguna';
+  const fecha = new Date(cita.fecha_cita);
+  const fechaStr = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  const hora = cita.hora_inicio || cita.hora_cita || '';
+  return `${fechaStr}${hora ? ` · ${hora}` : ''}`;
+};
 
 const DashboardCard = ({ title, value, icon, color, trend }) => (
   <div className="dashboard-card card">
@@ -38,13 +65,13 @@ const Dashboard = () => {
   const [citasHoy, setCitasHoy] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Determinar rol
   const rolName = user?.rol?.nombre_rol || 'SIN_ROL';
+  const isPacienteUser = esPaciente(user);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        if (rolName === 'ADMINISTRADOR' || rolName === 'MEDICO' || rolName === 'ENFERMERA') {
+        if (rolName === 'ADMINISTRADOR' || rolName === 'MEDICO' || rolName === 'SECRETARIA') {
           // Fetch counts (Simulated by getting arrays and counting for now)
           const [pacientesRes, citasRes, cirugiasRes, insumosRes] = await Promise.all([
             pacienteService.getAll().catch(()=>({data:[]})),
@@ -70,24 +97,18 @@ const Dashboard = () => {
 
           // Citas de "hoy" (simulado usando las primeras 5 para no complicar la demo)
           setCitasHoy(Array.isArray(citasData) ? citasData.slice(0, 5) : []);
-        } else if (rolName === 'PACIENTE') {
-          const citasRes = await citaService.getAll().catch(()=>({data:[]}));
+        } else if (isPacienteUser) {
+          const citasRes = await citaService.getAll().catch(() => ({ data: [] }));
           const citasData = citasRes.data?.citas || citasRes.data || [];
-          setCitasHoy(Array.isArray(citasData) ? citasData : []);
-
-          const proximas = Array.isArray(citasData) 
-            ? citasData.filter(c => (c.estado_cita || c.estado) === 'PROGRAMADA' && new Date(c.fecha_cita) >= new Date().setHours(0,0,0,0))
-            : [];
-          const proximaFecha = proximas.length > 0 
-            ? `${proximas[proximas.length - 1].fecha_cita} ${proximas[proximas.length - 1].hora_inicio || ''}`
-            : 'Ninguna';
+          const proximas = filtrarProximasCitas(citasData);
+          setCitasHoy(proximas);
 
           setStats({
             pacientes: 0,
             citas: Array.isArray(citasData) ? citasData.length : 0,
             cirugias: 0,
             insumosBajos: 0,
-            proximaCita: proximaFecha
+            proximaCita: formatearProximaCita(proximas[0]),
           });
         }
       } catch (error) {
@@ -98,7 +119,7 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, [rolName]);
+  }, [rolName, isPacienteUser]);
 
   const renderAdminStats = () => (
     <div className="stats-grid">
@@ -117,6 +138,13 @@ const Dashboard = () => {
     </div>
   );
 
+  const renderSecretariaStats = () => (
+    <div className="stats-grid">
+      <DashboardCard title="Pacientes Registrados" value={stats.pacientes} icon={<Users size={24} />} color="#FF69B4" trend={12} />
+      <DashboardCard title="Citas Programadas" value={stats.citas} icon={<Calendar size={24} />} color="#764ba2" trend={5} />
+    </div>
+  );
+
   const renderPacienteStats = () => (
     <div className="stats-grid">
       <DashboardCard title="Mi Próxima Cita" value={stats.proximaCita || 'Ninguna'} icon={<Calendar size={24} />} color="#00BFFF" />
@@ -128,18 +156,19 @@ const Dashboard = () => {
     <div className="dashboard-container animate-fade-in">
       <div className="dashboard-header">
         <h2>Bienvenido/a, {user?.primer_nombre || 'Usuario'}</h2>
-        <p>Panel de {rolName}</p>
+        <p>Panel de {getRolDisplayName(user)}</p>
       </div>
 
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center' }}>Cargando datos del sistema...</div>
       ) : (
         <>
-          {(rolName === 'ADMINISTRADOR' || rolName === 'ENFERMERA') && renderAdminStats()}
+          {rolName === 'ADMINISTRADOR' && renderAdminStats()}
           {rolName === 'MEDICO' && renderMedicoStats()}
-          {rolName === 'PACIENTE' && renderPacienteStats()}
+          {rolName === 'SECRETARIA' && renderSecretariaStats()}
+          {isPacienteUser && renderPacienteStats()}
 
-          {(rolName === 'ADMINISTRADOR' || rolName === 'MEDICO' || rolName === 'ENFERMERA') && (
+          {(rolName === 'ADMINISTRADOR' || rolName === 'MEDICO' || rolName === 'SECRETARIA') && (
             <div className="dashboard-content-grid" style={{ marginTop: '30px' }}>
               <div className="card appointments-card">
                 <div className="card-header">
@@ -195,15 +224,15 @@ const Dashboard = () => {
             </div>
           )}
 
-          {rolName === 'PACIENTE' && (
+          {isPacienteUser && (
             <div className="dashboard-content-grid" style={{ marginTop: '30px', gridTemplateColumns: '1fr' }}>
               <div className="card appointments-card">
                 <div className="card-header">
-                  <h3>Mis Citas Médicas</h3>
+                  <h3>Próximas Citas</h3>
                 </div>
                 <div className="appointments-list">
                   {citasHoy.length === 0 ? (
-                    <p style={{ padding: '20px', color: 'var(--text-muted)' }}>No tienes citas agendadas.</p>
+                    <p style={{ padding: '20px', color: 'var(--text-muted)' }}>No tienes citas próximas agendadas.</p>
                   ) : (
                     citasHoy.map(apt => (
                       <div key={apt.id_cita} className="appointment-item">

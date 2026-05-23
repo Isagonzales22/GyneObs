@@ -8,10 +8,12 @@ import Home from './pages/Home';
 import UsersRoles from './pages/UsersRoles';
 import PatientsList from './pages/PatientsList';
 import PatientDetail from './pages/PatientDetail';
+import HistorialClinico from './pages/HistorialClinico';
 import Citas from './pages/Citas';
 import Cirugias from './pages/Cirugias';
 import Insumos from './pages/Insumos';
 import Educacion from './pages/Educacion';
+import Recetas from './pages/Recetas';
 import Profile from './pages/Profile';
 
 // Context
@@ -40,10 +42,11 @@ function AppRoutes() {
         <Route path="pacientes" element={<PatientsList />} />
         <Route path="pacientes/:id" element={<PatientDetail />} />
         <Route path="citas" element={<Citas />} />
-        <Route path="historial" element={<PatientDetail />} />
+        <Route path="historial" element={<HistorialClinico />} />
         <Route path="cirugias" element={<Cirugias />} />
         <Route path="insumos" element={<Insumos />} />
         <Route path="educacion" element={<Educacion />} />
+        <Route path="recetas" element={<Recetas />} />
         <Route path="perfil" element={<Profile />} />
       </Route>
     </Routes>

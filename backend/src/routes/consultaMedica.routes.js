@@ -5,6 +5,7 @@ const {
   crearConsultaMedica,
   listarConsultasMedicas,
   obtenerConsultaMedica,
+  obtenerConsultasPorHistoria,
   actualizarConsultaMedica,
   eliminarConsultaMedica,
 } = require("../controllers/consultaMedica.controller");
@@ -17,6 +18,8 @@ const {
 router.post("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), crearConsultaMedica);
 
 router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), listarConsultasMedicas);
+
+router.get("/historia/:historiaId", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerConsultasPorHistoria);
 
 router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerConsultaMedica);
 

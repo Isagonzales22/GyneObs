@@ -20,7 +20,8 @@ router.post("/", verificarToken, permitirRoles("ADMINISTRADOR"), crearUsuario);
 
 router.get("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerUsuarioPorId);
 
-router.put("/:id", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), actualizarUsuario);
+// Cualquier usuario autenticado puede actualizar su propio perfil; staff actualiza a otros
+router.put("/:id", verificarToken, actualizarUsuario);
 
 router.delete("/:id", verificarToken, permitirRoles("ADMINISTRADOR"), eliminarUsuario);
 

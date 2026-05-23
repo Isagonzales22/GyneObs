@@ -43,23 +43,28 @@ export const pacienteService = {
 export const historiaClinicaService = {
   getByPaciente: (pacienteId) => api.get(`/historias-clinicas/paciente/${pacienteId}`),
   create: (data) => api.post('/historias-clinicas', data),
+  update: (id, data) => api.put(`/historias-clinicas/${id}`, data),
 };
 
 // Antecedentes
 export const antecedenteGOService = {
   getByHistoria: (historiaId) => api.get(`/antecedentes-go/historia/${historiaId}`),
   create: (data) => api.post('/antecedentes-go', data),
+  update: (id, data) => api.put(`/antecedentes-go/${id}`, data),
 };
 
 export const antecedentePatologicoService = {
   getByHistoria: (historiaId) => api.get(`/antecedentes-patologicos/historia/${historiaId}`),
   create: (data) => api.post('/antecedentes-patologicos', data),
+  update: (id, data) => api.put(`/antecedentes-patologicos/${id}`, data),
 };
 
 // Consultas
 export const consultaMedicaService = {
   getByHistoria: (historiaId) => api.get(`/consultas-medicas/historia/${historiaId}`),
   create: (data) => api.post('/consultas-medicas', data),
+  update: (id, data) => api.put(`/consultas-medicas/${id}`, data),
+  delete: (id) => api.delete(`/consultas-medicas/${id}`),
 };
 
 export const examenFisicoService = {
@@ -69,8 +74,19 @@ export const examenFisicoService = {
 
 // Recetas
 export const recetaService = {
+  getAll: () => api.get('/recetas'),
+  getById: (id) => api.get(`/recetas/${id}`),
   getByConsulta: (consultaId) => api.get(`/recetas/consulta/${consultaId}`),
   create: (data) => api.post('/recetas', data),
+  createCompleta: (data) => api.post('/recetas/completa', data),
+  update: (id, data) => api.put(`/recetas/${id}`, data),
+  delete: (id) => api.delete(`/recetas/${id}`),
+};
+
+export const detalleRecetaService = {
+  create: (data) => api.post('/detalle-recetas', data),
+  update: (id, data) => api.put(`/detalle-recetas/${id}`, data),
+  delete: (id) => api.delete(`/detalle-recetas/${id}`),
 };
 
 export const citaService = {
@@ -107,12 +123,16 @@ export const uploadService = {
 
 export const contenidoEducativoService = {
   getAll: () => api.get('/contenidos-educativos'),
+  getById: (id) => api.get(`/contenidos-educativos/${id}`),
   create: (data) => api.post('/contenidos-educativos', data),
+  update: (id, data) => api.put(`/contenidos-educativos/${id}`, data),
+  delete: (id) => api.delete(`/contenidos-educativos/${id}`),
 };
 
 // Agrega este servicio en tu api.js
 export const medicoService = {
   getAll: () => api.get('/medicos'),
+  getMe: () => api.get('/medicos/yo'),
   getById: (id) => api.get(`/medicos/${id}`),
   create: (data) => api.post('/medicos', data),
   update: (id, data) => api.put(`/medicos/${id}`, data),

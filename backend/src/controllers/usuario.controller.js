@@ -1,5 +1,22 @@
 const bcrypt = require("bcryptjs");
 const { Usuario, Rol, Medico, Paciente } = require("../../models");
+const { normalizarRol } = require("../utils/roles");
+
+const CAMPOS_PERFIL_PROPIO = [
+  "primer_nombre",
+  "segundo_nombre",
+  "primer_apellido",
+  "segundo_apellido",
+  "correo_electronico",
+  "telefono",
+  "ci",
+  "complemento_ci",
+  "fecha_nacimiento",
+  "sexo",
+  "direccion",
+  "foto_perfil_url",
+  "password",
+];
 
 const listarUsuarios = async (req, res) => {
   try {
@@ -65,6 +82,16 @@ const crearUsuario = async (req, res) => {
       ? await bcrypt.hash(password, 10)
       : null;
 
+    // Normalizar fecha_nacimiento: aceptar null para valores vacíos o inválidos
+    let normalizedFecha = null;
+    if (fecha_nacimiento) {
+      const d = new Date(fecha_nacimiento);
+      if (!isNaN(d.getTime())) {
+        // formato YYYY-MM-DD para tipo DATE en Postgres
+        normalizedFecha = d.toISOString().slice(0, 10);
+      }
+    }
+
     const usuario = await Usuario.create({
       id_rol: parseInt(id_rol),
       correo_electronico,
@@ -76,14 +103,14 @@ const crearUsuario = async (req, res) => {
       ci: ci || null,
       complemento_ci: complemento_ci || null,
       telefono: telefono || null,
-      fecha_nacimiento: fecha_nacimiento || null,
+      fecha_nacimiento: normalizedFecha,
       sexo: sexo || null,
       direccion: direccion || null,
-      foto_perfil_url: null
+      foto_perfil_url: foto_perfil_url || null,
     });
 
-    // Si es médico o médico residente, crear registro en Medicos
-    if (parseInt(id_rol) === 2 || parseInt(id_rol) === 3) {
+    // Si es médico, crear registro en Medicos
+    if (parseInt(id_rol) === 2) {
       await Medico.create({
         id_usuario: usuario.id_usuario,
         especialidad: "Obstetricia y Ginecología",
@@ -91,8 +118,8 @@ const crearUsuario = async (req, res) => {
       });
     }
 
-    // Si es paciente, crear registro en Pacientes
-    if (parseInt(id_rol) === 4) {
+    // Si es paciente (id_rol 3), crear registro en Pacientes
+    if (parseInt(id_rol) === 3) {
       const count = await Paciente.count();
       const codeNum = String(count + 1).padStart(4, '0');
       await Paciente.create({
@@ -157,7 +184,7 @@ const obtenerUsuarioPorId = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_rol, password, foto_perfil_url } = req.body;
+    const { id_rol, password } = req.body;
 
     const usuario = await Usuario.findByPk(id);
 
@@ -168,8 +195,19 @@ const actualizarUsuario = async (req, res) => {
       });
     }
 
+    const rolSolicitante = normalizarRol(req.usuario?.rol?.nombre_rol);
+    const esSelf = String(req.usuario.id_usuario) === String(id);
+    const esStaff = ["ADMINISTRADOR", "MEDICO"].includes(rolSolicitante);
+
+    if (!esStaff && !esSelf) {
+      return res.status(403).json({
+        ok: false,
+        message: "No tienes permisos para actualizar este usuario",
+      });
+    }
+
     // Verificar si el rol existe
-    if (id_rol) {
+    if (id_rol && esStaff) {
       const rolExiste = await Rol.findByPk(id_rol);
       if (!rolExiste) {
         return res.status(400).json({
@@ -179,18 +217,37 @@ const actualizarUsuario = async (req, res) => {
       }
     }
 
-    // Si hay contraseña nueva, hashearla
-    const updateData = { ...req.body };
+    let updateData = { ...req.body };
+    if (!esStaff) {
+      updateData = {};
+      for (const campo of CAMPOS_PERFIL_PROPIO) {
+        if (Object.prototype.hasOwnProperty.call(req.body, campo)) {
+          updateData[campo] = req.body[campo];
+        }
+      }
+    }
     if (password) {
       updateData.password_hash = await bcrypt.hash(password, 10);
       delete updateData.password;
     }
     if (id_rol) updateData.id_rol = parseInt(id_rol);
 
+    // Normalizar fecha_nacimiento en actualización: convertir cadenas vacías o inválidas a null
+    if (Object.prototype.hasOwnProperty.call(updateData, 'fecha_nacimiento')) {
+      const raw = updateData.fecha_nacimiento;
+      if (!raw) {
+        updateData.fecha_nacimiento = null;
+      } else {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) updateData.fecha_nacimiento = d.toISOString().slice(0, 10);
+        else updateData.fecha_nacimiento = null;
+      }
+    }
+
     await usuario.update(updateData);
 
-    // Si es médico o médico residente y no tiene registro en Medicos, crearlo
-    if (id_rol && (parseInt(id_rol) === 2 || parseInt(id_rol) === 3)) {
+    // Si es médico y no tiene registro en Medicos, crearlo
+    if (id_rol && parseInt(id_rol) === 2) {
       const exists = await Medico.findOne({ where: { id_usuario: id } });
       if (!exists) {
         await Medico.create({
@@ -202,7 +259,7 @@ const actualizarUsuario = async (req, res) => {
     }
 
     // Si es paciente y no tiene registro en Pacientes, crearlo
-    if (id_rol && parseInt(id_rol) === 4) {
+    if (id_rol && parseInt(id_rol) === 3) {
       const exists = await Paciente.findOne({ where: { id_usuario: id } });
       if (!exists) {
         const count = await Paciente.count();

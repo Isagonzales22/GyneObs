@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { Usuario, Rol } = require("../../models");
+const { normalizarRol } = require("../utils/roles");
 
 const verificarToken = async (req, res, next) => {
   try {
@@ -39,11 +40,11 @@ const verificarToken = async (req, res, next) => {
 
 const permitirRoles = (...rolesPermitidos) => {
   return (req, res, next) => {
-    const rolUsuario = req.usuario?.rol?.nombre_rol;
+    const rolUsuario = normalizarRol(req.usuario?.rol?.nombre_rol);
 
     const rolesExtendidos = [...rolesPermitidos];
     if (rolesPermitidos.includes("MEDICO")) {
-      rolesExtendidos.push("MEDICO_RESIDENTE", "SECRETARIA");
+      rolesExtendidos.push("SECRETARIA");
     }
 
     if (!rolesExtendidos.includes(rolUsuario)) {
@@ -60,4 +61,5 @@ const permitirRoles = (...rolesPermitidos) => {
 module.exports = {
   verificarToken,
   permitirRoles,
+  normalizarRol,
 };

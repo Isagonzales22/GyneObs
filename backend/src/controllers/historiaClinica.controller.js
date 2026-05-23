@@ -8,6 +8,8 @@ const {
   AntecedenteNoPatologico,
   AntecedenteFamiliar,
   ConsultaMedica,
+  Receta,
+  DetalleReceta,
 } = require("../../models");
 
 const listarHistoriasClinicas = async (req, res) => {
@@ -61,7 +63,17 @@ const obtenerHistoriaPorId = async (req, res) => {
         { model: AntecedentePatologico, as: "antecedentePatologico" },
         { model: AntecedenteNoPatologico, as: "antecedenteNoPatologico" },
         { model: AntecedenteFamiliar, as: "antecedenteFamiliar" },
-        { model: ConsultaMedica, as: "consultas" },
+        {
+          model: ConsultaMedica,
+          as: "consultas",
+          include: [
+            {
+              model: Receta,
+              as: "receta",
+              include: [{ model: DetalleReceta, as: "detalleReceta" }],
+            },
+          ],
+        },
       ],
     });
 
@@ -77,6 +89,54 @@ const obtenerHistoriaPorId = async (req, res) => {
     res.status(500).json({
       ok: false,
       message: "Error al obtener historia clínica",
+      error: error.message,
+    });
+  }
+};
+
+const obtenerHistoriaPorPaciente = async (req, res) => {
+  try {
+    const { pacienteId } = req.params;
+
+    const historia = await HistoriaClinica.findOne({
+      where: { id_paciente: pacienteId },
+      include: [
+        { model: Paciente, as: "paciente" },
+        { model: Medico, as: "medico" },
+        { model: AntecedenteGinecoObstetrico, as: "antecedenteGO" },
+        { model: EmbarazoPrevio, as: "embarazosPrevios" },
+        { model: AntecedentePatologico, as: "antecedentePatologico" },
+        { model: AntecedenteNoPatologico, as: "antecedenteNoPatologico" },
+        { model: AntecedenteFamiliar, as: "antecedenteFamiliar" },
+        {
+          model: ConsultaMedica,
+          as: "consultas",
+          include: [
+            {
+              model: Receta,
+              as: "receta",
+              include: [{ model: DetalleReceta, as: "detalleReceta" }],
+            },
+          ],
+        },
+      ],
+      order: [
+        [{ model: ConsultaMedica, as: 'consultas' }, 'fecha_consulta', 'DESC']
+      ]
+    });
+
+    if (!historia) {
+      return res.status(404).json({
+        ok: false,
+        message: "Historia clínica no encontrada para este paciente",
+      });
+    }
+
+    res.json({ ok: true, historia });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      message: "Error al obtener historia clínica por paciente",
       error: error.message,
     });
   }
@@ -143,6 +203,7 @@ module.exports = {
   listarHistoriasClinicas,
   crearHistoriaClinica,
   obtenerHistoriaPorId,
+  obtenerHistoriaPorPaciente,
   actualizarHistoriaClinica,
   eliminarHistoriaClinica,
 };

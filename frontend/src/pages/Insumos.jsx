@@ -25,12 +25,11 @@ const Insumos = () => {
     id_categoria_insumo: ''
   });
 
-  // Verificar roles por id_rol
-  // Verificar roles por id_rol (1=administrador, 2/3=médico, 4=paciente)
+  // Verificar roles por id_rol (1=administrador, 2=médico, 3=paciente, 4=secretaria)
   const userRoleId = Number(user?.rol?.id_rol ?? user?.id_rol);
   const isAdmin = userRoleId === 1;
-  const isMedic = userRoleId === 2 || userRoleId === 3;
-  const isPatient = userRoleId === 4;
+  const isMedic = userRoleId === 2;
+  const isSecretaria = userRoleId === 4;
 
   useEffect(() => {
     fetchInsumos();
@@ -174,6 +173,8 @@ const Insumos = () => {
               ? 'Control total de stock - Administrador' 
               : isMedic 
               ? 'Retiro de insumos médicos - Solo consulta y consumo'
+              : isSecretaria
+              ? 'Visualización de inventario'
               : 'Gestión de insumos'}
           </p>
         </div>
