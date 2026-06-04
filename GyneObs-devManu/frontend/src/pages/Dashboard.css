@@ -1,0 +1,201 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-header h2 {
+  font-size: 24px;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.dashboard-header p {
+  color: var(--text-muted);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-info {
+  flex: 1;
+}
+
+.card-info h3 {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.card-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-value-row .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.trend {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.trend.positive {
+  color: #28c76f;
+  background: rgba(40, 199, 111, 0.1);
+}
+
+.trend.negative {
+  color: #ea5455;
+  background: rgba(234, 84, 85, 0.1);
+}
+
+.dashboard-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card-header h3 {
+  font-size: 18px;
+  color: var(--text-dark);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appointment-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.appointment-item:hover {
+  background-color: rgba(0, 191, 255, 0.02);
+  border-color: var(--primary-blue-light);
+}
+
+.apt-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.apt-details {
+  flex: 1;
+}
+
+.apt-details h4 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--text-dark);
+}
+
+.apt-details p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.apt-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-completada { background: rgba(40, 199, 111, 0.1); color: #28c76f; }
+.status-en-espera { background: rgba(255, 159, 67, 0.1); color: #ff9f43; }
+.status-programada { background: rgba(0, 191, 255, 0.1); color: var(--primary-blue); }
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--primary-blue);
+}
+
+.action-btn span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.action-btn:hover {
+  background: linear-gradient(135deg, var(--primary-pink), var(--primary-blue));
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-btn:hover span {
+  color: white;
+}
+
+@media (max-width: 992px) {
+  .dashboard-content-grid {
+    grid-template-columns: 1fr;
+  }
+}

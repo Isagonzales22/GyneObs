@@ -1,0 +1,163 @@
+@import './Educacion.css';
+
+.recetas-hero {
+  background: linear-gradient(135deg, #0d6efd 0%, #764ba2 55%, #ff69b4 100%);
+}
+
+.recetas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.receta-card {
+  background: white;
+  border-radius: var(--border-radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.receta-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.receta-card-header {
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #f8f9fa, #fff);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.receta-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-dark);
+}
+
+.receta-fecha {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.receta-card-body {
+  padding: 16px 20px;
+}
+
+.receta-paciente-medico {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 500px) {
+  .receta-paciente-medico {
+    grid-template-columns: 1fr;
+  }
+}
+
+.receta-paciente-medico label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.receta-meds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.receta-meds-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.receta-meds-table td {
+  padding: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.receta-indicaciones {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fff8e6;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  border-left: 3px solid #ffc107;
+}
+
+.receta-card-actions {
+  padding: 12px 20px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.receta-form-meds {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.receta-med-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .receta-med-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .receta-med-row .btn-danger {
+    grid-column: 1 / -1;
+  }
+}
+
+.receta-form-panel {
+  margin-bottom: 20px;
+}
+
+.receta-medico-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  border-radius: var(--border-radius-md);
+  background: linear-gradient(135deg, #e7f1ff, #f8f9fa);
+  border: 1px solid rgba(13, 110, 253, 0.15);
+  font-size: 14px;
+}
+
+.receta-medico-badge strong {
+  color: #0d6efd;
+}
