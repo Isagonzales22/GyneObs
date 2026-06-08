@@ -5,6 +5,6 @@ const { verificarToken, permitirRoles } = require("../middlewares/authMiddleware
 
 router.get("/yo", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), obtenerMedicoLogueado);
 
-router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO"), listarMedicos);
+router.get("/", verificarToken, permitirRoles("ADMINISTRADOR", "MEDICO", "PACIENTE"), listarMedicos);
 
 module.exports = router;

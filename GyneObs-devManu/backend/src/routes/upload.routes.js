@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../config/upload');
+const uploadContenido = require('../config/uploadContenido');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
@@ -75,6 +76,54 @@ router.post('/perfil', (req, res) => {
       res.status(500).json({ 
         message: 'Error al procesar la foto en Cloudinary',
         error: error.message
+      });
+    }
+  });
+});
+
+router.post('/contenido', verificarToken, (req, res) => {
+  const uploadMiddleware = uploadContenido.single('archivo');
+
+  uploadMiddleware(req, res, async (err) => {
+    if (err) {
+      console.error('Error en multer:', err);
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'El archivo es demasiado grande. Máximo 10MB' });
+      }
+      return res.status(400).json({ message: err.message || 'Error al subir el archivo' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se subió ningún archivo' });
+    }
+
+    try {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'contenidos_educativos',
+        resource_type: 'auto',
+      });
+
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.json({
+        success: true,
+        archivoUrl: result.secure_url,
+        message: 'Archivo subido correctamente',
+      });
+    } catch (error) {
+      console.error('Error al subir a Cloudinary:', error);
+      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkErr) {
+          console.error('Error al eliminar archivo local temporal:', unlinkErr);
+        }
+      }
+      res.status(500).json({
+        message: 'Error al procesar el archivo en Cloudinary',
+        error: error.message,
       });
     }
   });

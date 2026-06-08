@@ -11,6 +11,7 @@ const {
   Receta,
   DetalleReceta,
 } = require("../../models");
+const { esPaciente } = require("../utils/roles");
 
 const listarHistoriasClinicas = async (req, res) => {
   try {

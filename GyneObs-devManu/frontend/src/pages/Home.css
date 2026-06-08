@@ -1240,3 +1240,329 @@
     top: -15px;
   }
 }
+
+/* ==========================================================================
+   TEMA OSCURO Y CONTROLES DE APARIENCIA EN LA PÁGINA HOME
+   ========================================================================== */
+
+.home-nav .theme-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(11, 59, 92, 0.05);
+  border-radius: 30px;
+  padding: 4px;
+  margin-right: 1rem;
+}
+
+.home-nav .theme-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748B;
+  transition: all 0.2s ease;
+}
+
+.home-nav .theme-btn:hover {
+  background: rgba(201, 58, 107, 0.1);
+  color: #C93A6B;
+  transform: scale(1.1);
+}
+
+.home-nav .theme-btn.active {
+  background: linear-gradient(135deg, #C93A6B, #0B3B5C);
+  color: white;
+  box-shadow: 0 2px 8px rgba(201, 58, 107, 0.3);
+}
+
+@media (max-width: 900px) {
+  .home-nav .theme-controls {
+    margin-right: 0;
+    margin-bottom: 0.8rem;
+    justify-content: center;
+    width: fit-content;
+    align-self: center;
+  }
+}
+
+/* --- OVERRIDES MODO OSCURO (html.dark) --- */
+html.dark .home-container {
+  background: linear-gradient(135deg, 
+    #0d0f1a 0%, 
+    #13101c 25%, 
+    #0f1424 50%, 
+    #0e1724 75%, 
+    #0a1320 100%);
+}
+
+html.dark .home-container::before {
+  background: radial-gradient(circle at 0% 0%, rgba(201, 58, 107, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 100% 100%, rgba(0, 191, 255, 0.06) 0%, transparent 50%);
+}
+
+html.dark .home-container::after {
+  background-image: radial-gradient(rgba(201, 58, 107, 0.08) 1px, transparent 1px);
+}
+
+html.dark .home-nav {
+  background: rgba(26, 29, 46, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .home-nav .theme-controls {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .home-nav .theme-btn {
+  color: #94a3b8;
+}
+
+html.dark .home-nav .theme-btn:hover {
+  background: rgba(255, 105, 180, 0.15);
+  color: #FF69B4;
+}
+
+html.dark .home-nav .theme-btn.active {
+  background: linear-gradient(135deg, #FF69B4, #00BFFF);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.4);
+}
+
+html.dark .clinic-name {
+  background: linear-gradient(135deg, #FF69B4 0%, #00BFFF 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.dark .doctor-title {
+  color: #94a3b8;
+}
+
+/* Botones en modo oscuro */
+html.dark .btn-primary {
+  background: #FF69B4;
+  color: white;
+}
+
+html.dark .btn-primary:hover {
+  background: #FF1493;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
+}
+
+html.dark .btn-outline {
+  color: #00BFFF;
+  border-color: #00BFFF;
+}
+
+html.dark .btn-outline:hover {
+  background: rgba(0, 191, 255, 0.1);
+  color: #FF69B4;
+  border-color: #FF69B4;
+}
+
+html.dark .btn-secondary {
+  background: #1e2235;
+  color: #87CEFA;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html.dark .btn-secondary:hover {
+  background: #252a41;
+  color: #FF69B4;
+  border-color: #FF69B4;
+}
+
+/* Secciones de contenido */
+html.dark .hero,
+html.dark .specialties-section,
+html.dark .services-section,
+html.dark .contact-section,
+html.dark .testimonials-section {
+  background: rgba(22, 25, 41, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .hero-text h1 {
+  color: #ffffff;
+}
+
+html.dark .hero-text p {
+  color: #cbd5e1;
+}
+
+html.dark .hero-badge {
+  background: rgba(255, 105, 180, 0.12);
+  color: #FF69B4;
+}
+
+/* Especialidades */
+html.dark .section-header h2 {
+  color: #FF69B4;
+}
+
+html.dark .section-header p {
+  color: #94a3b8;
+}
+
+html.dark .specialty-card {
+  background: linear-gradient(135deg, #1e2235, #161929);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .specialty-card h3 {
+  color: #87CEFA;
+}
+
+html.dark .specialty-card p {
+  color: #94a3b8;
+}
+
+html.dark .specialty-tag {
+  background: rgba(255, 105, 180, 0.12);
+  color: #FF69B4;
+}
+
+/* Servicios */
+html.dark .service-card {
+  background: #1e2235;
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+html.dark .service-image-wrapper {
+  background: #161929;
+}
+
+html.dark .service-card img {
+  background: #1e2235;
+}
+
+/* Testimonios */
+html.dark .testimonial-card {
+  background: #1e2235;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.dark .testimonial-text {
+  color: #e2e8f0;
+}
+
+html.dark .testimonial-name {
+  color: #FF69B4;
+}
+
+html.dark .testimonial-role {
+  color: #94a3b8;
+}
+
+html.dark .carousel-btn {
+  background: #1e2235;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .carousel-btn:hover {
+  background: #FF69B4;
+  color: white;
+  border-color: #FF69B4;
+}
+
+html.dark .dot {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+html.dark .dot.active {
+  background: #FF69B4;
+}
+
+/* Contacto y Mapa */
+html.dark .contact-item strong {
+  color: #ffffff;
+}
+
+html.dark .contact-item p {
+  color: #cbd5e1;
+}
+
+html.dark .contact-icon {
+  background: #1e2235;
+}
+
+html.dark .contact-icon i {
+  color: #00BFFF;
+}
+
+html.dark .contact-item:hover .contact-icon {
+  background: #FF69B4;
+}
+
+html.dark .contact-item:hover .contact-icon i {
+  color: white;
+}
+
+html.dark .map-container {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .coords {
+  color: #94a3b8;
+}
+
+html.dark .coords-small {
+  color: #64748b;
+}
+
+/* Filtro premium para oscurecer el mapa en modo oscuro */
+html.dark .leaflet-tile-container {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+html.dark .leaflet-container {
+  background: #242426;
+}
+
+html.dark .leaflet-bar a {
+  background-color: #1e2235;
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .leaflet-popup-content-wrapper,
+html.dark .leaflet-popup-tip {
+  background: #1e2235;
+  color: #ffffff;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.5);
+}
+
+/* Footer */
+html.dark .home-footer {
+  background: rgba(13, 15, 26, 0.95);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .footer-left p {
+  color: #cbd5e1;
+}
+
+html.dark .footer-sub {
+  color: #94a3b8;
+}
+
+html.dark .footer-links a {
+  color: #94a3b8;
+}
+
+html.dark .footer-links a:hover {
+  color: #FF69B4;
+}
+
+html.dark .menu-toggle span {
+  background-color: white;
+}

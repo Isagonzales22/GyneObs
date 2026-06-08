@@ -14,10 +14,12 @@ import Cirugias from './pages/Cirugias';
 import Insumos from './pages/Insumos';
 import Educacion from './pages/Educacion';
 import Recetas from './pages/Recetas';
+import Reportes from './pages/Reportes';
 import Profile from './pages/Profile';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 const PrivateRoute = ({ children }) => {
   const auth = useAuth();
@@ -47,6 +49,7 @@ function AppRoutes() {
         <Route path="insumos" element={<Insumos />} />
         <Route path="educacion" element={<Educacion />} />
         <Route path="recetas" element={<Recetas />} />
+        <Route path="reportes" element={<Reportes />} />
         <Route path="perfil" element={<Profile />} />
       </Route>
     </Routes>
@@ -55,11 +58,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

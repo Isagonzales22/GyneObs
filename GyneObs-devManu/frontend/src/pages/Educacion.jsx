@@ -3,7 +3,7 @@ import {
   BookOpen, Video, FileText, Upload, Trash2, ExternalLink, Eye,
   Image as ImageIcon, Pencil, X, Save
 } from 'lucide-react';
-import { contenidoEducativoService } from '../services/api';
+import { contenidoEducativoService, uploadService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { esPaciente } from '../utils/roles';
@@ -165,6 +165,8 @@ const Educacion = () => {
   const [viewModal, setViewModal] = useState({ show: false, item: null });
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, name: '' });
   const [alertModal, setAlertModal] = useState({ show: false, message: '', type: 'success' });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileError, setFileError] = useState('');
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
@@ -206,11 +208,39 @@ const Educacion = () => {
 
   const resetForm = () => {
     setFormData({ titulo: '', descripcion: '', tipo_contenido: 'Documento', enlace_url: '' });
+    setSelectedFile(null);
+    setFileError('');
     setEditingId(null);
     setShowForm(false);
   };
 
+  const validateFile = (file, tipo) => {
+    if (!file) return { valid: true, error: '' };
+
+    if (tipo === 'Video') {
+      return { valid: false, error: 'No se pueden subir archivos para videos. Usa un enlace de YouTube.' };
+    }
+
+    const imageExtensions = /\.(png|jpe?g|gif|webp|svg)$/i;
+    const documentExtensions = /\.(pdf|docx?|pptx?|txt|xlsx?|xls)$/i;
+
+    if (tipo === 'Infografia') {
+      if (!imageExtensions.test(file.name)) {
+        return { valid: false, error: 'Solo se permiten imágenes (PNG, JPG, GIF, WebP, SVG)' };
+      }
+    } else if (tipo === 'Documento') {
+      const isImage = imageExtensions.test(file.name);
+      const isDocument = documentExtensions.test(file.name);
+      if (!isImage && !isDocument) {
+        return { valid: false, error: 'Solo se permiten documentos (PDF, Word, PowerPoint, Excel, TXT) o imágenes' };
+      }
+    }
+    return { valid: true, error: '' };
+  };
+
   const abrirEdicion = (item) => {
+    setSelectedFile(null);
+    setFileError('');
     setFormData({
       titulo: item.titulo || '',
       descripcion: item.descripcion || '',
@@ -225,7 +255,42 @@ const Educacion = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = buildPayload(formData, userId);
+      // Validar que no tengan ambos: enlace Y archivo
+      const hasLink = formData.enlace_url?.trim();
+      const hasFile = selectedFile !== null;
+      
+      if (hasLink && hasFile) {
+        setFileError('Por favor, proporciona solo uno: enlace O archivo, no ambos');
+        return;
+      }
+      
+      if (!hasLink && !hasFile) {
+        setFileError('Debes proporcionar un enlace o un archivo');
+        return;
+      }
+
+      if (selectedFile) {
+        const validation = validateFile(selectedFile, formData.tipo_contenido);
+        if (!validation.valid) {
+          setFileError(validation.error);
+          return;
+        }
+      }
+
+      let fileUrl = '';
+      if (selectedFile && formData.tipo_contenido !== 'Video') {
+        const uploadRes = await uploadService.uploadContentFile(selectedFile);
+        fileUrl = uploadRes.data?.archivoUrl || uploadRes.data?.secure_url || '';
+        if (!fileUrl) {
+          throw new Error('No se pudo obtener la URL del archivo subido');
+        }
+      }
+
+      const payload = buildPayload(
+        { ...formData, enlace_url: fileUrl || formData.enlace_url },
+        userId
+      );
+
       if (editingId) {
         await contenidoEducativoService.update(editingId, payload);
         setAlertModal({ show: true, message: 'Material actualizado correctamente', type: 'success' });
@@ -233,13 +298,14 @@ const Educacion = () => {
         await contenidoEducativoService.create(payload);
         setAlertModal({ show: true, message: 'Material educativo publicado exitosamente', type: 'success' });
       }
+
       resetForm();
       await cargarContenidos();
     } catch (error) {
       console.error(error);
       setAlertModal({
         show: true,
-        message: error.response?.data?.message || 'Error al guardar el material',
+        message: error.response?.data?.message || error.message || 'Error al guardar el material',
         type: 'error',
       });
     }
@@ -415,7 +481,12 @@ const Educacion = () => {
                     <label>Tipo de contenido</label>
                     <select
                       value={formData.tipo_contenido}
-                      onChange={(e) => setFormData({ ...formData, tipo_contenido: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedFile(null);
+                        setFileError('');
+                        setFormData({ ...formData, tipo_contenido: value });
+                      }}
                     >
                       <option value="Video">Video</option>
                       <option value="Documento">Documento / Artículo</option>
@@ -423,14 +494,56 @@ const Educacion = () => {
                     </select>
                   </div>
                   <div className="form-group full">
-                    <label>Enlace (URL del video, PDF o imagen)</label>
+                    <label>Enlace o archivo</label>
                     <input
                       type="url"
                       value={formData.enlace_url}
-                      onChange={(e) => setFormData({ ...formData, enlace_url: e.target.value })}
-                      placeholder="https://..."
-                      required
+                      onChange={(e) => {
+                        setSelectedFile(null);
+                        setFileError('');
+                        setFormData({ ...formData, enlace_url: e.target.value });
+                      }}
+                      placeholder="https://... (video, PDF o imagen)"
+                      disabled={selectedFile !== null}
                     />
+                    <div style={{ marginTop: '10px' }}>
+                      <input
+                        type="file"
+                        disabled={formData.tipo_contenido === 'Video'}
+                        accept={formData.tipo_contenido === 'Infografia' ? 'image/*' : formData.tipo_contenido === 'Documento' ? '.pdf,.doc,.docx,.ppt,.pptx,.txt,.xls,.xlsx,image/*' : ''}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          const validation = validateFile(file, formData.tipo_contenido);
+                          
+                          if (file && !validation.valid) {
+                            setSelectedFile(null);
+                            setFileError(validation.error);
+                          } else if (file && validation.valid) {
+                            setSelectedFile(file);
+                            setFileError('');
+                            setFormData({ ...formData, enlace_url: '' });
+                          } else {
+                            setSelectedFile(null);
+                            setFileError('');
+                          }
+                        }}
+                      />
+                      {selectedFile && (
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Archivo: {selectedFile.name}</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setSelectedFile(null)}
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      )}
+                      {fileError && (
+                        <p style={{ color: '#d32f2f', marginTop: '8px' }}>{fileError}</p>
+                      )}
+                    </div>
                   </div>
                   <div className="form-group full">
                     <label>Descripción</label>

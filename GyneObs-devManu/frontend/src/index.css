@@ -205,3 +205,107 @@ input:focus, select:focus, textarea:focus {
 .animate-spin {
   animation: spin 1.2s linear infinite;
 }
+
+/* ─── Dark Mode Theme ─────────────────────────────────────────────── */
+html.dark {
+  --bg-color: #0d0f1a;
+  --bg-color-glass: rgba(15, 18, 32, 0.88);
+  --text-dark: #e2e8f0;
+  --text-light: #ffffff;
+  --text-muted: #94a3b8;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+html.dark body {
+  background-color: var(--bg-color);
+  background-image: radial-gradient(circle at top right, rgba(255, 105, 180, 0.06), transparent 40%),
+                    radial-gradient(circle at bottom left, rgba(0, 191, 255, 0.06), transparent 40%);
+  color: var(--text-dark);
+}
+
+html.dark .card {
+  background: #161929;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.dark .glass-panel {
+  background: rgba(15, 18, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1e2235;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-dark);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.15);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #161929;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 105, 180, 0.4);
+}
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: var(--primary-pink-light);
+}
+
+/* Dark sidebar */
+html.dark .sidebar {
+  background: rgba(15, 18, 32, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.dark .top-header {
+  background: rgba(15, 18, 32, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.dark .sidebar-header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .sidebar-footer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .nav-item {
+  color: #94a3b8;
+}
+
+html.dark .nav-item:hover {
+  background: rgba(255, 105, 180, 0.08);
+  color: var(--primary-pink-light);
+}
+
+html.dark .nav-item.active {
+  background: linear-gradient(135deg, rgba(255, 105, 180, 0.15), rgba(0, 191, 255, 0.15));
+  color: var(--primary-blue-light);
+}
+
+html.dark .header-title h3 {
+  color: var(--text-dark);
+}
+
+html.dark .user-name {
+  color: var(--text-dark);
+}
+

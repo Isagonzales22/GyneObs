@@ -12,6 +12,8 @@ const {
   reporteHistoriaClinicaPDF,
   reporteInventarioPDF,
   reporteCitasPDF,
+  generarPDF,
+  obtenerMetricas,
 } = require("../controllers/reporte.controller");
 
 
@@ -83,6 +85,20 @@ router.get(
   verificarToken,
   permitirRoles("ADMINISTRADOR", "MEDICO", "SECRETARIA"),
   reporteCitasPDF
+);
+
+router.get(
+  "/metricas",
+  verificarToken,
+  permitirRoles("ADMINISTRADOR"),
+  obtenerMetricas
+);
+
+router.post(
+  "/generar",
+  verificarToken,
+  permitirRoles("ADMINISTRADOR"),
+  generarPDF
 );
 
 module.exports = router;

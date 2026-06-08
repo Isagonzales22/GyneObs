@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   Home, Users, Calendar, Clipboard, 
-  Activity, Package, BookOpen, Pill, LogOut, Menu, X, User
+  Activity, Package, BookOpen, Pill, LogOut, Menu, X, User,
+  Sun, Moon, Monitor, BarChart3
 } from 'lucide-react';
 import { getRolDisplayName } from '../utils/roles';
 import UserAvatar from './UserAvatar';
+import logo from '../images/logotipo/LOGOTIPO.png';
 import './Layout.css';
 
 const Layout = () => {
   const { user, logout } = useAuth();
+  const { theme, mode, toggleTheme, setMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const basePath = '/app';
 
@@ -24,6 +28,7 @@ const Layout = () => {
     { path: '/educacion', label: 'Educación', icon: <BookOpen size={20} />, roles: [1, 2, 3] },
     { path: '/recetas', label: 'Recetas', icon: <Pill size={20} />, roles: [1, 2, 3] },
     { path: '/usuarios', label: 'Gestión de Personal', icon: <Users size={20} />, roles: [1] },
+    { path: '/reportes', label: 'Reportes', icon: <BarChart3 size={20} />, roles: [1] },
     { path: '/perfil', label: 'Mi Perfil', icon: <User size={20} />, roles: [1, 2, 3, 4] },
   ];
 
@@ -41,7 +46,7 @@ const Layout = () => {
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'} glass-panel`}>
         <div className="sidebar-header">
           <div className="logo-container">
-            <div className="logo-icon">GO</div>
+            <img src={logo} alt="GyneObs" className="logo-image" style={{ height: '40px', width: 'auto' }} />
             {sidebarOpen && <h2>GyneObs</h2>}
           </div>
           <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -65,13 +70,6 @@ const Layout = () => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-role-badge" style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', marginBottom: '12px' }}>
-            {sidebarOpen && (
-              <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px' }}>
-                Rol: {getRolDisplayName(user)}
-              </small>
-            )}
-          </div>
           <button className="nav-item logout-btn" onClick={logout}>
             <LogOut size={20} />
             {sidebarOpen && <span className="nav-label">Cerrar Sesión</span>}
@@ -83,6 +81,29 @@ const Layout = () => {
         <header className="top-header glass-panel">
           <div className="header-title">
             <h3>Bienvenido, {user?.primer_nombre || user?.nombre || 'Usuario'}</h3>
+          </div>
+          <div className="theme-controls">
+            <button
+              className={`theme-btn ${mode === 'auto' ? 'active' : ''}`}
+              onClick={() => setMode('auto')}
+              title="Automático (sistema)"
+            >
+              <Monitor size={16} />
+            </button>
+            <button
+              className={`theme-btn ${mode === 'light' ? 'active' : ''}`}
+              onClick={() => setMode('light')}
+              title="Tema claro"
+            >
+              <Sun size={16} />
+            </button>
+            <button
+              className={`theme-btn ${mode === 'dark' ? 'active' : ''}`}
+              onClick={() => setMode('dark')}
+              title="Tema oscuro"
+            >
+              <Moon size={16} />
+            </button>
           </div>
           <div className="user-profile">
             <NavLink to={`${basePath}/perfil`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>

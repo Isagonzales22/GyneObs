@@ -32,7 +32,7 @@ router.post(
 router.get(
   "/paciente/:pacienteId",
   verificarToken,
-  permitirRoles("ADMINISTRADOR", "MEDICO"),
+  permitirRoles("ADMINISTRADOR", "MEDICO", "PACIENTE"),
   obtenerHistoriaPorPaciente
 );
 

@@ -82,7 +82,14 @@ export const recetaService = {
   update: (id, data) => api.put(`/recetas/${id}`, data),
   delete: (id) => api.delete(`/recetas/${id}`),
 };
-
+export const reporteService = {
+  generarPDF: (tipo, filtros) => 
+    api.post('/reportes/generar', { tipo, ...filtros }, {
+      responseType: 'arraybuffer'
+    }),
+  obtenerMetricas: (tipo, pacienteId) => 
+    api.get(`/reportes/metricas?tipo=${tipo}${pacienteId ? `&pacienteId=${pacienteId}` : ''}`),
+};
 export const detalleRecetaService = {
   create: (data) => api.post('/detalle-recetas', data),
   update: (id, data) => api.put(`/detalle-recetas/${id}`, data),
@@ -116,6 +123,13 @@ export const uploadService = {
     const formData = new FormData();
     formData.append('foto', file);
     return api.post('/upload/perfil', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  uploadContentFile: (file) => {
+    const formData = new FormData();
+    formData.append('archivo', file);
+    return api.post('/upload/contenido', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   }

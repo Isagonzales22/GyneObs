@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "GyneObs",
+    "slug": "gyneobs-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "GyneObs necesita acceso a tu cámara para actualizar tu foto de perfil.",
+        "NSPhotoLibraryUsageDescription": "GyneObs necesita acceso a tu galería para seleccionar una foto de perfil."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FF69B4"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GyneObs necesita acceso a tu galería de fotos.",
+          "cameraPermission": "GyneObs necesita acceso a tu cámara."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

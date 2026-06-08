@@ -1,8 +1,17 @@
-const { Paciente, Usuario } = require("../../models");
+const { Paciente, Usuario, HistoriaClinica, Cita, Receta } = require("../../models");
+const { esPaciente } = require("../utils/roles");
 
 const listarPacientes = async (req, res) => {
   try {
+    let where = {};
+    
+    // If the requester is a patient, only return their own record
+    if (esPaciente(req.usuario)) {
+      where.id_usuario = req.usuario.id_usuario;
+    }
+    
     const pacientes = await Paciente.findAll({
+      where,
       include: [{
         model: Usuario,
         as: "usuario",
@@ -60,6 +69,14 @@ const obtenerPacientePorId = async (req, res) => {
       });
     }
 
+    // Verify that a patient can only access their own record
+    if (esPaciente(req.usuario) && paciente.id_usuario !== req.usuario.id_usuario) {
+      return res.status(403).json({
+        ok: false,
+        message: "No tienes permiso para acceder a este paciente",
+      });
+    }
+
     res.json({ ok: true, paciente });
   } catch (error) {
     res.status(500).json({
@@ -112,11 +129,40 @@ const eliminarPaciente = async (req, res) => {
       });
     }
 
+    // Verificar si tiene datos vinculados
+    const historiales = await HistoriaClinica.count({ where: { id_paciente: id } });
+    const citas = await Cita.count({ where: { id_paciente: id } });
+    const recetas = await Receta.count({ 
+      where: { 
+        id_paciente: id
+      } 
+    });
+    
+    const tieneVinculos = historiales > 0 || citas > 0 || recetas > 0;
+    let advertencia = null;
+
+    if (tieneVinculos) {
+      advertencia = `Advertencia: Este paciente tiene ${historiales} historial(es) clínico(s), ${citas} cita(s) y ${recetas} receta(s) vinculadas que también serán eliminadas.`;
+    }
+
+    // Eliminar datos vinculados primero
+    if (historiales > 0) {
+      await HistoriaClinica.destroy({ where: { id_paciente: id } });
+    }
+    if (citas > 0) {
+      await Cita.destroy({ where: { id_paciente: id } });
+    }
+    if (recetas > 0) {
+      await Receta.destroy({ where: { id_paciente: id } });
+    }
+
+    // Eliminar paciente
     await paciente.destroy();
 
     res.json({
       ok: true,
       message: "Paciente eliminado correctamente",
+      advertencia: advertencia,
     });
   } catch (error) {
     res.status(500).json({

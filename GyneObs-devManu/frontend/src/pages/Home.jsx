@@ -2,13 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
 import logo from '../images/logotipo/LOGOTIPO.png';
-import servicio1 from '../images/publicidad/publicidad1.jpg?url';
-import servicio2 from '../images/publicidad/publicidad2.jpg?url';
-import servicio3 from '../images/publicidad/publicidad3.jpg?url';
-import videoPublicidad from '../images/publicidad/videopublicidad.mp4';
+import servicio1 from '../images/clinica/clinica1.jpg?url';
+import servicio2 from '../images/clinica/clinica2.jpg?url';
+import servicio3 from '../images/clinica/clinica3.jpg?url';
+import videoPublicidad from '../images/clinica/video_clinica.mp4';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon, Monitor } from 'lucide-react';
 
 const Home = () => {
+  const { mode, setMode } = useTheme();
   const servicios = [servicio1, servicio2, servicio3];
   
   // Estado para el testimonio actual (carrusel)
@@ -232,6 +235,29 @@ const Home = () => {
         </button>
         
         <nav className={`nav-right ${isMenuOpen ? 'open' : ''}`}>
+          <div className="theme-controls">
+            <button
+              className={`theme-btn ${mode === 'auto' ? 'active' : ''}`}
+              onClick={() => setMode('auto')}
+              title="Automático (sistema)"
+            >
+              <Monitor size={16} />
+            </button>
+            <button
+              className={`theme-btn ${mode === 'light' ? 'active' : ''}`}
+              onClick={() => setMode('light')}
+              title="Tema claro"
+            >
+              <Sun size={16} />
+            </button>
+            <button
+              className={`theme-btn ${mode === 'dark' ? 'active' : ''}`}
+              onClick={() => setMode('dark')}
+              title="Tema oscuro"
+            >
+              <Moon size={16} />
+            </button>
+          </div>
           <Link to="/login" className="btn btn-outline" onClick={closeMenu}>
             <i className="fas fa-sign-in-alt"></i> Iniciar Sesión
           </Link>
